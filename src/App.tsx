@@ -9,6 +9,7 @@ import RiskCalculator from '@/pages/RiskCalculator';
 import EconomicCalendar from '@/pages/EconomicCalendar';
 import Profile from '@/pages/Profile';
 import BottomNav from '@/components/BottomNav';
+import InstallBanner from '@/components/InstallBanner';
 import { Loader2 } from 'lucide-react';
 import type { TabName } from '@/types';
 
