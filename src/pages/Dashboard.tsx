@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
-import { TrendingUp, TrendingDown, Globe, AlertTriangle, Zap, Target, BarChart3, ArrowRight, Copy, Check } from 'lucide-react';
+import { TrendingUp, TrendingDown, Globe, AlertTriangle, Zap, Target, BarChart3, ArrowRight, Copy, Check, RefreshCw } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useCopy } from '@/hooks/useCopy';
-import { marketData, marketSessions, newsItems, sampleSignals, categoryColors, formatPrice } from '@/lib/data';
+import { useMarketData } from '@/hooks/useMarketData';
+import { newsItems, sampleSignals, categoryColors, formatPrice } from '@/lib/data';
+import { getMarketSessions } from '@/lib/data';
 import { cn, timeAgo } from '@/lib/utils';
 
 interface DashboardProps {
@@ -13,6 +15,7 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
   const { user, checkLicenseValidity } = useAuth();
   const hasValidLicense = checkLicenseValidity();
   const { copied, copy } = useCopy();
+  const { data: liveMarketData, lastUpdated, refresh: refreshMarkets, isLoading: marketsLoading } = useMarketData();
   const [currentTime, setCurrentTime] = useState(new Date());
 
   useEffect(() => {
@@ -20,6 +23,7 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
     return () => clearInterval(timer);
   }, []);
 
+  const sessions = getMarketSessions();
   const activeSignals = sampleSignals.filter(s => s.status === 'ACTIVE');
   const recentSignals = sampleSignals.slice(0, 4);
 
@@ -34,9 +38,15 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
               <p className="text-xs text-muted-foreground">{currentTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</p>
             </div>
           </div>
-          {!hasValidLicense && (
-            <span className="px-2 py-1 text-xs bg-trading-red/20 text-trading-red rounded-full border border-trading-red/30">No License</span>
-          )}
+          <div className="flex items-center gap-2">
+            <button onClick={refreshMarkets} disabled={marketsLoading}
+              className="p-2 rounded-lg glass-card text-muted-foreground hover:text-foreground transition-colors">
+              <RefreshCw className={cn("w-4 h-4", marketsLoading && "animate-spin")} />
+            </button>
+            {!hasValidLicense && (
+              <span className="px-2 py-1 text-xs bg-trading-red/20 text-trading-red rounded-full border border-trading-red/30">No License</span>
+            )}
+          </div>
         </div>
       </header>
 
@@ -48,6 +58,9 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
           <p className="text-muted-foreground mt-1">
             {hasValidLicense ? 'Your license is active. Access all premium signals.' : 'Activate your license to access premium signals.'}
           </p>
+          {lastUpdated && (
+            <p className="text-xs text-muted-foreground mt-1">Prices updated: {lastUpdated.toLocaleTimeString()}</p>
+          )}
         </div>
 
         <section className="animate-slide-up animation-delay-100">
@@ -56,7 +69,7 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
             <Globe className="w-4 h-4 text-muted-foreground" />
           </div>
           <div className="grid grid-cols-4 gap-2">
-            {marketSessions.map((session) => (
+            {sessions.map((session) => (
               <div key={session.name} className={cn('glass-card rounded-xl p-3 text-center transition-all', session.isOpen && 'border-trading-green/30')}>
                 <div className={cn('w-2 h-2 rounded-full mx-auto mb-2', session.isOpen ? 'bg-trading-green shadow-glow-green' : 'bg-muted-foreground/30')} />
                 <p className="text-xs font-medium text-foreground">{session.name}</p>
@@ -100,6 +113,30 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
                 <stat.icon className={cn('w-5 h-5 mx-auto mb-2', stat.color)} />
                 <p className="text-2xl font-bold text-foreground">{stat.value}</p>
                 <p className="text-xs text-muted-foreground">{stat.label}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Live Market Ticker */}
+        <section className="animate-slide-up animation-delay-300">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Live Markets</h3>
+            <button onClick={() => onNavigate('analyze')} className="flex items-center gap-1 text-sm text-trading-orange hover:text-trading-orange-light transition-colors">
+              Analyze <ArrowRight className="w-4 h-4" />
+            </button>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            {liveMarketData.slice(0, 6).map((m) => (
+              <div key={m.symbol} className="glass-card rounded-xl p-3 card-hover" onClick={() => onNavigate('analyze')}>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold text-foreground">{m.symbol}</span>
+                  {m.change >= 0 ? <TrendingUp className="w-3 h-3 text-trading-green" /> : <TrendingDown className="w-3 h-3 text-trading-red" />}
+                </div>
+                <p className="text-sm font-mono font-bold text-foreground mt-1">{formatPrice(m.price, m.category)}</p>
+                <p className={cn('text-xs', m.change >= 0 ? 'text-trading-green' : 'text-trading-red')}>
+                  {m.changePercent > 0 ? '+' : ''}{m.changePercent.toFixed(2)}%
+                </p>
               </div>
             ))}
           </div>
