@@ -1,27 +1,67 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Route, Routes } from "react-router-dom";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { Toaster } from "@/components/ui/toaster";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import Index from "./pages/Index.tsx";
-import NotFound from "./pages/NotFound.tsx";
+import { useState, useEffect } from 'react';
+import { AuthProvider, useAuth } from '@/context/AuthContext';
+import Login from '@/pages/Login';
+import Signup from '@/pages/Signup';
+import Dashboard from '@/pages/Dashboard';
+import Signals from '@/pages/Signals';
+import Analyze from '@/pages/Analyze';
+import RiskCalculator from '@/pages/RiskCalculator';
+import EconomicCalendar from '@/pages/EconomicCalendar';
+import Profile from '@/pages/Profile';
+import BottomNav from '@/components/BottomNav';
+import { Loader2 } from 'lucide-react';
+import type { TabName } from '@/types';
 
-const queryClient = new QueryClient();
+function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
+  );
+}
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+function AppContent() {
+  const { isAuthenticated, isLoading } = useAuth();
+  const [currentPage, setCurrentPage] = useState<'login' | 'signup' | 'dashboard'>('login');
+  const [activeTab, setActiveTab] = useState<TabName>('dashboard');
+
+  useEffect(() => {
+    if (isAuthenticated && currentPage !== 'dashboard') setCurrentPage('dashboard');
+  }, [isAuthenticated, currentPage]);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center">
+          <Loader2 className="w-10 h-10 text-trading-orange animate-spin mx-auto mb-4" />
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-background">
+        {currentPage === 'login' && <Login onNavigate={setCurrentPage} />}
+        {currentPage === 'signup' && <Signup onNavigate={setCurrentPage} />}
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-background">
+      <main className="pb-20">
+        {activeTab === 'dashboard' && <Dashboard onNavigate={(tab: string) => setActiveTab(tab as TabName)} />}
+        {activeTab === 'analyze' && <Analyze onNavigate={(tab: string) => setActiveTab(tab as TabName)} />}
+        {activeTab === 'signals' && <Signals onNavigate={(tab: string) => setActiveTab(tab as TabName)} />}
+        {activeTab === 'calendar' && <EconomicCalendar />}
+        {activeTab === 'risk-calc' && <RiskCalculator />}
+        {activeTab === 'profile' && <Profile onNavigate={setCurrentPage} />}
+      </main>
+      <BottomNav activeTab={activeTab} onTabChange={setActiveTab} />
+    </div>
+  );
+}
 
 export default App;

@@ -1,0 +1,45 @@
+{
+  "name": "Midnight Panda Signals",
+  "short_name": "Midnight Panda",
+  "description": "Precision Trading Signals - AI-powered market analysis in real-time",
+  "start_url": "/",
+  "display": "standalone",
+  "display_override": ["window-controls-overlay", "minimal-ui"],
+  "background_color": "#000000",
+  "theme_color": "#000000",
+  "orientation": "portrait",
+  "scope": "/",
+  "icons": [
+    {
+      "src": "/panda-logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["finance", "trading", "business"],
+  "screenshots": [
+    {
+      "src": "/panda-logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "form_factor": "narrow"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Dashboard",
+      "short_name": "Dashboard",
+      "description": "View trading dashboard",
+      "url": "/",
+      "icons": [{ "src": "/panda-logo.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "Signals",
+      "short_name": "Signals",
+      "description": "View trading signals",
+      "url": "/signals",
+      "icons": [{ "src": "/panda-logo.png", "sizes": "96x96" }]
+    }
+  ]
+}
