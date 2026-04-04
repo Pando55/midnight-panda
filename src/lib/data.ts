@@ -41,12 +41,30 @@ export const sampleSignals: TradingSignal[] = [
   { id: 'sig_008', asset: 'NAS100', category: 'INDICES', direction: 'BUY', entryPrice: 17520, stopLoss: 17350, takeProfit: 17850, status: 'HIT_TP', analysis: 'Tech Rally: AI sector momentum + Strong NFP data.', createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000), closedAt: new Date(Date.now() - 18 * 60 * 60 * 1000), pips: 330 },
 ];
 
-export const marketSessions: MarketSession[] = [
-  { name: 'Sydney', isOpen: true, opensAt: '22:00', closesAt: '07:00' },
-  { name: 'Tokyo', isOpen: true, opensAt: '00:00', closesAt: '09:00' },
-  { name: 'London', isOpen: false, opensAt: '08:00', closesAt: '17:00' },
-  { name: 'New York', isOpen: false, opensAt: '13:00', closesAt: '22:00' },
-];
+// Dynamic market sessions based on current UTC time
+export function getMarketSessions(): MarketSession[] {
+  const now = new Date();
+  const utcH = now.getUTCHours();
+
+  // Sydney: 22:00 - 07:00 UTC
+  const sydneyOpen = utcH >= 22 || utcH < 7;
+  // Tokyo: 00:00 - 09:00 UTC
+  const tokyoOpen = utcH >= 0 && utcH < 9;
+  // London: 08:00 - 17:00 UTC
+  const londonOpen = utcH >= 8 && utcH < 17;
+  // New York: 13:00 - 22:00 UTC
+  const nyOpen = utcH >= 13 && utcH < 22;
+
+  return [
+    { name: 'Sydney', isOpen: sydneyOpen, opensAt: '22:00', closesAt: '07:00' },
+    { name: 'Tokyo', isOpen: tokyoOpen, opensAt: '00:00', closesAt: '09:00' },
+    { name: 'London', isOpen: londonOpen, opensAt: '08:00', closesAt: '17:00' },
+    { name: 'New York', isOpen: nyOpen, opensAt: '13:00', closesAt: '22:00' },
+  ];
+}
+
+// Keep static reference for backward compatibility
+export const marketSessions = getMarketSessions();
 
 export const newsItems: NewsItem[] = [
   { id: 'news_001', title: 'NFP - Non-Farm Payrolls', impact: 'HIGH', time: 'Today 13:30', currency: 'USD' },

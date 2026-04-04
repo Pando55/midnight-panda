@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { TrendingUp, TrendingDown, Search, ArrowUpRight, ArrowDownRight, Lock, Loader2, Target, AlertTriangle, BarChart3, Clock } from 'lucide-react';
+import { TrendingUp, TrendingDown, Search, ArrowUpRight, ArrowDownRight, Lock, Loader2, Target, AlertTriangle, BarChart3, Clock, RefreshCw } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
-import { marketData, categoryColors, formatPrice } from '@/lib/data';
+import { useMarketData } from '@/hooks/useMarketData';
+import { categoryColors, formatPrice } from '@/lib/data';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -27,6 +28,7 @@ interface AIAnalysis {
 export default function Analyze({ onNavigate }: AnalyzeProps) {
   const { checkLicenseValidity } = useAuth();
   const hasValidLicense = checkLicenseValidity();
+  const { data: liveMarketData, isLoading: marketsLoading, lastUpdated, refresh: refreshMarkets } = useMarketData();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<AssetCategory | 'ALL'>('ALL');
   const [selectedAsset, setSelectedAsset] = useState<MarketData | null>(null);
@@ -35,7 +37,7 @@ export default function Analyze({ onNavigate }: AnalyzeProps) {
   const [analysisError, setAnalysisError] = useState('');
 
   const categories: AssetCategory[] = ['FOREX', 'COMMODITIES', 'METALS', 'INDICES', 'CRYPTO'];
-  const filteredMarkets = marketData.filter(m => {
+  const filteredMarkets = liveMarketData.filter(m => {
     const matchesSearch = m.symbol.toLowerCase().includes(searchQuery.toLowerCase()) || m.name.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCat = selectedCategory === 'ALL' || m.category === selectedCategory;
     return matchesSearch && matchesCat;
@@ -91,9 +93,17 @@ export default function Analyze({ onNavigate }: AnalyzeProps) {
   return (
     <div className="min-h-screen pb-24 bg-background">
       <header className="sticky top-0 z-40 bg-background/95 backdrop-blur-xl border-b border-border">
-        <div className="px-4 py-4">
-          <h1 className="text-xl font-semibold text-foreground">AI Market Analysis</h1>
-          <p className="text-sm text-muted-foreground">Tap any asset for real-time AI insights</p>
+        <div className="px-4 py-4 flex items-center justify-between">
+          <div>
+            <h1 className="text-xl font-semibold text-foreground">AI Market Analysis</h1>
+            <p className="text-sm text-muted-foreground">
+              {lastUpdated ? `Updated ${lastUpdated.toLocaleTimeString()}` : 'Tap any asset for real-time AI insights'}
+            </p>
+          </div>
+          <button onClick={refreshMarkets} disabled={marketsLoading}
+            className="p-2 rounded-lg glass-card text-muted-foreground hover:text-foreground transition-colors">
+            <RefreshCw className={cn("w-4 h-4", marketsLoading && "animate-spin")} />
+          </button>
         </div>
       </header>
       <div className="px-4 py-4 space-y-4">
@@ -112,6 +122,14 @@ export default function Analyze({ onNavigate }: AnalyzeProps) {
                 selectedCategory === cat ? 'bg-trading-orange text-foreground' : 'glass-card text-muted-foreground')}>{cat}</button>
           ))}
         </div>
+
+        {/* Loading indicator for initial market data */}
+        {marketsLoading && liveMarketData.length <= 19 && (
+          <div className="flex items-center justify-center py-4">
+            <Loader2 className="w-5 h-5 text-trading-orange animate-spin" />
+            <span className="ml-2 text-sm text-muted-foreground">Fetching live prices...</span>
+          </div>
+        )}
 
         {/* AI Analysis Result */}
         {(isAnalyzing || analysis || analysisError) && selectedAsset && (
@@ -147,8 +165,6 @@ export default function Analyze({ onNavigate }: AnalyzeProps) {
             {analysis && (
               <>
                 <p className="text-sm text-muted-foreground">{analysis.summary}</p>
-
-                {/* Entry, SL, TP with reasons */}
                 <div className="space-y-3">
                   <div className="p-3 rounded-lg bg-trading-orange/5 border border-trading-orange/20">
                     <div className="flex items-center justify-between mb-1">
@@ -172,8 +188,6 @@ export default function Analyze({ onNavigate }: AnalyzeProps) {
                     <p className="text-xs text-muted-foreground">{analysis.takeProfit.reason}</p>
                   </div>
                 </div>
-
-                {/* Risk:Reward & Timeframe */}
                 <div className="grid grid-cols-2 gap-3">
                   <div className="p-3 rounded-lg bg-background/50 text-center">
                     <p className="text-xs text-muted-foreground mb-1">Risk : Reward</p>
@@ -184,8 +198,6 @@ export default function Analyze({ onNavigate }: AnalyzeProps) {
                     <p className="text-lg font-bold text-foreground">{analysis.timeframe}</p>
                   </div>
                 </div>
-
-                {/* Key Levels */}
                 <div className="grid grid-cols-2 gap-3">
                   <div className="p-3 rounded-lg bg-trading-green/5 border border-trading-green/20 text-center">
                     <p className="text-xs text-muted-foreground mb-1">Support</p>
@@ -196,8 +208,6 @@ export default function Analyze({ onNavigate }: AnalyzeProps) {
                     <p className="text-sm font-mono font-bold text-trading-red">{analysis.keyLevels.resistance}</p>
                   </div>
                 </div>
-
-                {/* Indicators */}
                 <div>
                   <p className="text-xs text-muted-foreground uppercase font-semibold mb-2">Technical Indicators</p>
                   <div className="flex flex-wrap gap-2">
@@ -206,8 +216,6 @@ export default function Analyze({ onNavigate }: AnalyzeProps) {
                     ))}
                   </div>
                 </div>
-
-                {/* Warning */}
                 {analysis.warning && (
                   <div className="p-3 rounded-lg bg-yellow-500/10 border border-yellow-500/20 text-sm text-yellow-400 flex items-start gap-2">
                     <AlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0" />
