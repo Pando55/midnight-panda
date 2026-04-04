@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useCallback, useEffect } fr
 import type { User, License, LicenseDuration, AuthState, GeneratedKey } from '@/types';
 
 // Admin email - change this to your email
-const ADMIN_EMAIL = 'admin@midnightpanda.com';
+const ADMIN_EMAIL = 'mohalethapelo93@gmail.com';
 
 interface AuthContextType extends AuthState {
   login: (email: string, password: string) => Promise<boolean>;
