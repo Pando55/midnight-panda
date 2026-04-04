@@ -46,6 +46,7 @@ function AppContent() {
       <div className="min-h-screen bg-background">
         {currentPage === 'login' && <Login onNavigate={setCurrentPage} />}
         {currentPage === 'signup' && <Signup onNavigate={setCurrentPage} />}
+        <InstallBanner />
       </div>
     );
   }
