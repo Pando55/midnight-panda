@@ -9,6 +9,7 @@ import RiskCalculator from '@/pages/RiskCalculator';
 import EconomicCalendar from '@/pages/EconomicCalendar';
 import Profile from '@/pages/Profile';
 import BottomNav from '@/components/BottomNav';
+import InstallBanner from '@/components/InstallBanner';
 import { Loader2 } from 'lucide-react';
 import type { TabName } from '@/types';
 
@@ -45,6 +46,7 @@ function AppContent() {
       <div className="min-h-screen bg-background">
         {currentPage === 'login' && <Login onNavigate={setCurrentPage} />}
         {currentPage === 'signup' && <Signup onNavigate={setCurrentPage} />}
+        <InstallBanner />
       </div>
     );
   }
