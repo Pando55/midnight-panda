@@ -1,4 +1,4 @@
-import { LayoutDashboard, BarChart3, Zap, Calculator, Calendar, User } from 'lucide-react';
+import { LayoutDashboard, BarChart3, Zap, Calculator, Calendar, User, GraduationCap } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { TabName } from '@/types';
 
