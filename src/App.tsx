@@ -59,6 +59,7 @@ function AppContent() {
         {activeTab === 'analyze' && <Analyze onNavigate={(tab: string) => setActiveTab(tab as TabName)} />}
         {activeTab === 'signals' && <Signals onNavigate={(tab: string) => setActiveTab(tab as TabName)} />}
         {activeTab === 'calendar' && <EconomicCalendar />}
+        {activeTab === 'education' && <Education />}
         {activeTab === 'risk-calc' && <RiskCalculator />}
         {activeTab === 'profile' && <Profile onNavigate={setCurrentPage} />}
       </main>
