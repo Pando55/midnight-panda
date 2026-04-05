@@ -7,6 +7,7 @@ import Signals from '@/pages/Signals';
 import Analyze from '@/pages/Analyze';
 import RiskCalculator from '@/pages/RiskCalculator';
 import EconomicCalendar from '@/pages/EconomicCalendar';
+import Education from '@/pages/Education';
 import Profile from '@/pages/Profile';
 import BottomNav from '@/components/BottomNav';
 import InstallBanner from '@/components/InstallBanner';
