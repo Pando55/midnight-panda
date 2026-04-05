@@ -62,7 +62,10 @@ function AppContent() {
         {activeTab === 'signals' && <Signals onNavigate={(tab: string) => setActiveTab(tab as TabName)} />}
         {activeTab === 'calendar' && <EconomicCalendar />}
         {activeTab === 'education' && <Education />}
+        {activeTab === 'community' && <Community />}
+        {activeTab === 'leaderboard' && <Leaderboard />}
         {activeTab === 'risk-calc' && <RiskCalculator />}
+        {activeTab === 'profile' && <Profile onNavigate={setCurrentPage} />}
         {activeTab === 'profile' && <Profile onNavigate={setCurrentPage} />}
       </main>
       <BottomNav activeTab={activeTab} onTabChange={setActiveTab} />
