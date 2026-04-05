@@ -14,7 +14,78 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      chat_messages: {
+        Row: {
+          created_at: string
+          id: string
+          message: string
+          user_id: string
+          username: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message: string
+          user_id: string
+          username: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message?: string
+          user_id?: string
+          username?: string
+        }
+        Relationships: []
+      }
+      trader_profiles: {
+        Row: {
+          avatar_emoji: string
+          badges: string[]
+          created_at: string
+          id: string
+          rank: string
+          streak: number
+          total_pips: number
+          total_trades: number
+          updated_at: string
+          user_id: string
+          username: string
+          win_rate: number
+          winning_trades: number
+        }
+        Insert: {
+          avatar_emoji?: string
+          badges?: string[]
+          created_at?: string
+          id?: string
+          rank?: string
+          streak?: number
+          total_pips?: number
+          total_trades?: number
+          updated_at?: string
+          user_id: string
+          username: string
+          win_rate?: number
+          winning_trades?: number
+        }
+        Update: {
+          avatar_emoji?: string
+          badges?: string[]
+          created_at?: string
+          id?: string
+          rank?: string
+          streak?: number
+          total_pips?: number
+          total_trades?: number
+          updated_at?: string
+          user_id?: string
+          username?: string
+          win_rate?: number
+          winning_trades?: number
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

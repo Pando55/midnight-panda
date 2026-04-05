@@ -8,6 +8,8 @@ import Analyze from '@/pages/Analyze';
 import RiskCalculator from '@/pages/RiskCalculator';
 import EconomicCalendar from '@/pages/EconomicCalendar';
 import Education from '@/pages/Education';
+import Community from '@/pages/Community';
+import Leaderboard from '@/pages/Leaderboard';
 import Profile from '@/pages/Profile';
 import BottomNav from '@/components/BottomNav';
 import InstallBanner from '@/components/InstallBanner';
@@ -60,7 +62,10 @@ function AppContent() {
         {activeTab === 'signals' && <Signals onNavigate={(tab: string) => setActiveTab(tab as TabName)} />}
         {activeTab === 'calendar' && <EconomicCalendar />}
         {activeTab === 'education' && <Education />}
+        {activeTab === 'community' && <Community />}
+        {activeTab === 'leaderboard' && <Leaderboard />}
         {activeTab === 'risk-calc' && <RiskCalculator />}
+        {activeTab === 'profile' && <Profile onNavigate={setCurrentPage} />}
         {activeTab === 'profile' && <Profile onNavigate={setCurrentPage} />}
       </main>
       <BottomNav activeTab={activeTab} onTabChange={setActiveTab} />
