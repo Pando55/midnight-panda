@@ -1,4 +1,4 @@
-import { LayoutDashboard, BarChart3, Zap, Calculator, Calendar, User } from 'lucide-react';
+import { LayoutDashboard, BarChart3, Zap, Calculator, Calendar, User, GraduationCap } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { TabName } from '@/types';
 
@@ -12,6 +12,7 @@ const tabs: { id: TabName; label: string; icon: typeof LayoutDashboard }[] = [
   { id: 'analyze', label: 'Markets', icon: BarChart3 },
   { id: 'signals', label: 'Signals', icon: Zap },
   { id: 'calendar', label: 'Calendar', icon: Calendar },
+  { id: 'education', label: 'Learn', icon: GraduationCap },
   { id: 'risk-calc', label: 'Risk', icon: Calculator },
   { id: 'profile', label: 'Profile', icon: User },
 ];
