@@ -68,7 +68,6 @@ function AppContent() {
         {activeTab === 'chart-analysis' && <ChartAnalysis onNavigate={(tab: string) => setActiveTab(tab as TabName)} />}
         {activeTab === 'risk-calc' && <RiskCalculator />}
         {activeTab === 'profile' && <Profile onNavigate={setCurrentPage} />}
-        {activeTab === 'profile' && <Profile onNavigate={setCurrentPage} />}
       </main>
       <BottomNav activeTab={activeTab} onTabChange={setActiveTab} />
     </div>
