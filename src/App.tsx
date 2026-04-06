@@ -65,6 +65,7 @@ function AppContent() {
         {activeTab === 'education' && <Education />}
         {activeTab === 'community' && <Community />}
         {activeTab === 'leaderboard' && <Leaderboard />}
+        {activeTab === 'chart-analysis' && <ChartAnalysis onNavigate={(tab: string) => setActiveTab(tab as TabName)} />}
         {activeTab === 'risk-calc' && <RiskCalculator />}
         {activeTab === 'profile' && <Profile onNavigate={setCurrentPage} />}
         {activeTab === 'profile' && <Profile onNavigate={setCurrentPage} />}
