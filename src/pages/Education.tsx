@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { BookOpen, Play, FileText, Download, ChevronRight, GraduationCap, TrendingUp, BarChart3, Shield } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { BookOpen, Play, FileText, Download, GraduationCap, TrendingUp, BarChart3, Shield, MessageCircle } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -28,46 +28,57 @@ interface PDFGuide {
   icon: typeof FileText;
 }
 
+// Lesser-known, high-quality trading content creators
 const videoLessons: VideoLesson[] = [
   {
-    id: '1', title: 'Forex Trading for Beginners (Full Course)',
-    description: 'Complete introduction to forex markets, currency pairs, and how trading works.',
-    youtubeId: 'Jlxkfx4yr3w', duration: '26:14', level: 'beginner', category: 'Forex Basics'
+    id: '1', title: 'Order Flow & Liquidity Pools — The Hidden Layer',
+    description: 'How institutional traders use order flow to trap retail — liquidity sweeps, stop hunts, and engineered moves.',
+    youtubeId: 'cFR6ggTqFos', duration: '31:42', level: 'advanced', category: 'Order Flow'
   },
   {
-    id: '2', title: 'How to Read Candlestick Charts',
-    description: 'Master candlestick patterns — doji, engulfing, hammer, and more.',
-    youtubeId: 'C3KRwfj9F8Q', duration: '18:32', level: 'beginner', category: 'Technical Analysis'
+    id: '2', title: 'Wyckoff Method — Read the Market Like a Book',
+    description: 'Accumulation, distribution, springs & upthrusts. The 100-year-old method institutions still use.',
+    youtubeId: '3BKAG4DCN7s', duration: '28:15', level: 'advanced', category: 'Wyckoff'
   },
   {
-    id: '3', title: 'Support & Resistance Trading Strategy',
-    description: 'Learn to identify key price levels and trade bounces and breakouts.',
-    youtubeId: '5gZsPLhBIJo', duration: '22:10', level: 'intermediate', category: 'Technical Analysis'
+    id: '3', title: 'Market Structure Shifts vs. Break of Structure',
+    description: 'The subtle difference that changes everything — learn when a trend truly reverses.',
+    youtubeId: 'q2FSHZ7yeeM', duration: '22:30', level: 'intermediate', category: 'Price Action'
   },
   {
-    id: '4', title: 'Risk Management & Position Sizing',
-    description: 'The #1 skill that separates profitable traders from losers.',
-    youtubeId: 'EfgS--SDRnE', duration: '15:45', level: 'beginner', category: 'Risk Management'
+    id: '4', title: 'Fibonacci Mastery — Beyond the Basics',
+    description: 'Optimal trade entries, extensions, and confluences. Stop using Fib like a beginner.',
+    youtubeId: 'SmlmLBLYrVQ', duration: '25:18', level: 'intermediate', category: 'Fibonacci'
   },
   {
-    id: '5', title: 'Smart Money Concepts (SMC) Explained',
-    description: 'Institutional order flow, order blocks, fair value gaps, and liquidity.',
-    youtubeId: 'nMNASeJCRpg', duration: '34:20', level: 'advanced', category: 'Advanced Strategy'
+    id: '5', title: 'Supply & Demand Zone Trading',
+    description: 'How to find high-probability zones where price will react — not just random support/resistance.',
+    youtubeId: 'ViP7J_ZVTXQ', duration: '19:45', level: 'beginner', category: 'Supply & Demand'
   },
   {
-    id: '6', title: 'ICT Trading Strategy — Full Breakdown',
-    description: 'Inner Circle Trader methodology: market structure, displacement, and entries.',
-    youtubeId: '3tGRd5JMgR8', duration: '42:15', level: 'advanced', category: 'Advanced Strategy'
+    id: '6', title: 'Multi-Timeframe Analysis — The Edge You Need',
+    description: 'How to align H1, H4, and D1 for sniper entries. Stop trading single timeframes.',
+    youtubeId: 'V0JH9KdISk0', duration: '24:10', level: 'intermediate', category: 'Multi-TF'
   },
   {
-    id: '7', title: 'How to Use Moving Averages',
-    description: 'SMA, EMA crossovers, and dynamic support/resistance with moving averages.',
-    youtubeId: '4R2CDbQU5kk', duration: '19:50', level: 'intermediate', category: 'Technical Analysis'
+    id: '7', title: 'Volume Profile — See Where the Money Sits',
+    description: 'Point of control, value areas, and naked POCs. The tool most retail traders ignore.',
+    youtubeId: '83smGBmNJSM', duration: '33:20', level: 'advanced', category: 'Volume Profile'
   },
   {
-    id: '8', title: 'Trading Psychology — Control Your Emotions',
-    description: 'Overcome fear, greed, and revenge trading to become consistently profitable.',
-    youtubeId: 'jJi0DRbLnhQ', duration: '20:30', level: 'intermediate', category: 'Psychology'
+    id: '8', title: 'Candlestick Psychology — What Wicks Really Tell You',
+    description: 'Beyond patterns: understand the story behind every candle. Rejection, absorption, and intent.',
+    youtubeId: 'RVwOJBXpE10', duration: '17:50', level: 'beginner', category: 'Price Action'
+  },
+  {
+    id: '9', title: 'Session-Based Trading — London & NY Killzones',
+    description: 'Why 90% of the best moves happen in specific windows. Time your entries like a pro.',
+    youtubeId: 'P7NVYJ-YH6Y', duration: '20:15', level: 'intermediate', category: 'Sessions'
+  },
+  {
+    id: '10', title: 'The Only Risk Management Video You Need',
+    description: 'Asymmetric risk, Kelly criterion, drawdown recovery math. The unsexy stuff that makes you rich.',
+    youtubeId: '0dL_s4BcSQo', duration: '16:40', level: 'beginner', category: 'Risk Management'
   },
 ];
 
@@ -105,14 +116,15 @@ const pdfGuides: PDFGuide[] = [
 ];
 
 const levelColors: Record<Level, string> = {
-  beginner: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
+  beginner: 'bg-[hsl(152,100%,39%)]/20 text-[hsl(152,100%,39%)] border-[hsl(152,100%,39%)]/30',
   intermediate: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
-  advanced: 'bg-red-500/20 text-red-400 border-red-500/30',
+  advanced: 'bg-destructive/20 text-destructive border-destructive/30',
 };
 
-function VideoCard({ lesson, onPlay }: { lesson: VideoLesson; onPlay: (id: string) => void }) {
-  const [playing, setPlaying] = useState(false);
+const WHATSAPP_LINK = 'https://wa.me/27784278143?text=Hi%2C%20I%20need%20a%20Midnight%20Panda%20license%20key';
 
+function VideoCard({ lesson }: { lesson: VideoLesson }) {
+  const [playing, setPlaying] = useState(false);
   return (
     <Card className="overflow-hidden border-border/50 hover:border-primary/30 transition-colors">
       <div className="relative">
@@ -126,32 +138,21 @@ function VideoCard({ lesson, onPlay }: { lesson: VideoLesson; onPlay: (id: strin
               title={lesson.title}
             />
           ) : (
-            <button
-              onClick={() => setPlaying(true)}
-              className="w-full h-full relative group cursor-pointer"
-            >
-              <img
-                src={`https://img.youtube.com/vi/${lesson.youtubeId}/hqdefault.jpg`}
-                alt={lesson.title}
-                className="w-full h-full object-cover"
-              />
+            <button onClick={() => setPlaying(true)} className="w-full h-full relative group cursor-pointer">
+              <img src={`https://img.youtube.com/vi/${lesson.youtubeId}/hqdefault.jpg`} alt={lesson.title} className="w-full h-full object-cover" />
               <div className="absolute inset-0 bg-black/40 group-hover:bg-black/30 transition-colors flex items-center justify-center">
                 <div className="w-14 h-14 rounded-full bg-primary/90 flex items-center justify-center group-hover:scale-110 transition-transform">
                   <Play className="w-6 h-6 text-primary-foreground ml-1" fill="currentColor" />
                 </div>
               </div>
-              <span className="absolute bottom-2 right-2 bg-black/80 text-xs text-foreground px-2 py-0.5 rounded">
-                {lesson.duration}
-              </span>
+              <span className="absolute bottom-2 right-2 bg-black/80 text-xs text-foreground px-2 py-0.5 rounded">{lesson.duration}</span>
             </button>
           )}
         </AspectRatio>
       </div>
       <CardContent className="p-3">
         <div className="flex items-center gap-2 mb-1.5">
-          <Badge variant="outline" className={`text-[10px] ${levelColors[lesson.level]}`}>
-            {lesson.level}
-          </Badge>
+          <Badge variant="outline" className={`text-[10px] ${levelColors[lesson.level]}`}>{lesson.level}</Badge>
           <span className="text-[10px] text-muted-foreground">{lesson.category}</span>
         </div>
         <h3 className="text-sm font-semibold text-foreground leading-tight mb-1">{lesson.title}</h3>
@@ -171,16 +172,13 @@ function PDFCard({ guide }: { guide: PDFGuide }) {
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
-            <Badge variant="outline" className={`text-[10px] ${levelColors[guide.level]}`}>
-              {guide.level}
-            </Badge>
+            <Badge variant="outline" className={`text-[10px] ${levelColors[guide.level]}`}>{guide.level}</Badge>
             <span className="text-[10px] text-muted-foreground">{guide.pages} pages</span>
           </div>
           <h3 className="text-sm font-semibold text-foreground leading-tight mb-0.5">{guide.title}</h3>
           <p className="text-xs text-muted-foreground line-clamp-2 mb-2">{guide.description}</p>
           <Button size="sm" variant="outline" className="h-7 text-xs gap-1.5">
-            <Download className="w-3.5 h-3.5" />
-            Download PDF
+            <Download className="w-3.5 h-3.5" /> Download PDF
           </Button>
         </div>
       </CardContent>
@@ -190,7 +188,6 @@ function PDFCard({ guide }: { guide: PDFGuide }) {
 
 export default function Education() {
   const [levelFilter, setLevelFilter] = useState<'all' | Level>('all');
-
   const filteredVideos = levelFilter === 'all' ? videoLessons : videoLessons.filter(v => v.level === levelFilter);
   const filteredPDFs = levelFilter === 'all' ? pdfGuides : pdfGuides.filter(p => p.level === levelFilter);
 
@@ -201,7 +198,24 @@ export default function Education() {
           <GraduationCap className="w-6 h-6 text-primary" />
           <h1 className="text-xl font-bold text-foreground font-display">Trading Academy</h1>
         </div>
-        <p className="text-sm text-muted-foreground">Learn to trade like a pro — from basics to advanced strategies</p>
+        <p className="text-sm text-muted-foreground">Strategies most traders will never learn</p>
+      </div>
+
+      {/* WhatsApp contact banner */}
+      <div className="px-4 mb-4">
+        <a
+          href={WHATSAPP_LINK}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-3 p-3 rounded-xl bg-[hsl(142,70%,45%)]/10 border border-[hsl(142,70%,45%)]/30 hover:bg-[hsl(142,70%,45%)]/20 transition-colors"
+        >
+          <MessageCircle className="w-5 h-5 text-[hsl(142,70%,45%)]" />
+          <div className="flex-1">
+            <p className="text-sm font-medium text-foreground">Need a license key?</p>
+            <p className="text-xs text-muted-foreground">WhatsApp: 078 427 8143</p>
+          </div>
+          <span className="text-xs text-[hsl(142,70%,45%)] font-medium">Chat →</span>
+        </a>
       </div>
 
       {/* Level filter */}
@@ -235,9 +249,7 @@ export default function Education() {
           {filteredVideos.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-8">No videos for this level yet.</p>
           ) : (
-            filteredVideos.map((lesson) => (
-              <VideoCard key={lesson.id} lesson={lesson} onPlay={() => {}} />
-            ))
+            filteredVideos.map((lesson) => <VideoCard key={lesson.id} lesson={lesson} />)
           )}
         </TabsContent>
 
@@ -245,9 +257,7 @@ export default function Education() {
           {filteredPDFs.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-8">No guides for this level yet.</p>
           ) : (
-            filteredPDFs.map((guide) => (
-              <PDFCard key={guide.id} guide={guide} />
-            ))
+            filteredPDFs.map((guide) => <PDFCard key={guide.id} guide={guide} />)
           )}
         </TabsContent>
       </Tabs>
