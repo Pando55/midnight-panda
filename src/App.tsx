@@ -10,6 +10,7 @@ import EconomicCalendar from '@/pages/EconomicCalendar';
 import Education from '@/pages/Education';
 import Community from '@/pages/Community';
 import Leaderboard from '@/pages/Leaderboard';
+import ChartAnalysis from '@/pages/ChartAnalysis';
 import Profile from '@/pages/Profile';
 import BottomNav from '@/components/BottomNav';
 import InstallBanner from '@/components/InstallBanner';
