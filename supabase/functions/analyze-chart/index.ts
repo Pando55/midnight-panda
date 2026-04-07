@@ -1,5 +1,4 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -13,38 +12,9 @@ serve(async (req) => {
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
-    const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
-    const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY");
-    if (!SUPABASE_URL || !SUPABASE_ANON_KEY) throw new Error("Supabase config missing");
+    const { imageBase64, mimeType, pair, timeframe, notes } = await req.json();
 
-    // Get auth token from request
-    const authHeader = req.headers.get("authorization");
-    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-      global: { headers: { Authorization: authHeader || "" } },
-    });
-
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    const { imagePath, pair, timeframe, notes } = await req.json();
-
-    if (!imagePath) throw new Error("No chart image provided");
-
-    // Download the image from storage
-    const { data: fileData, error: dlError } = await supabase.storage
-      .from("chart-uploads")
-      .download(imagePath);
-
-    if (dlError || !fileData) throw new Error("Failed to download chart image");
-
-    // Convert to base64
-    const arrayBuffer = await fileData.arrayBuffer();
-    const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
-    const mimeType = imagePath.endsWith(".png") ? "image/png" : "image/jpeg";
+    if (!imageBase64) throw new Error("No chart image provided");
 
     const prompt = `You are an expert technical analyst for a trading signals app called Midnight Panda. Analyze this chart image.
 
@@ -92,7 +62,7 @@ Provide analysis in this EXACT JSON format (no markdown, raw JSON only):
             role: "user",
             content: [
               { type: "text", text: prompt },
-              { type: "image_url", image_url: { url: `data:${mimeType};base64,${base64}` } },
+              { type: "image_url", image_url: { url: `data:${mimeType || "image/jpeg"};base64,${imageBase64}` } },
             ],
           },
         ],

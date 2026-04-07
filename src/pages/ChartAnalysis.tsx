@@ -1,6 +1,5 @@
 import { useState, useRef } from 'react';
-import { Upload, Camera, Loader2, Lock, Target, AlertTriangle, TrendingUp, TrendingDown, Shield, BarChart3, X, Image as ImageIcon, MessageCircle } from 'lucide-react';
-import { useAuth } from '@/context/AuthContext';
+import { Upload, Loader2, Target, AlertTriangle, TrendingUp, Shield, BarChart3, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -27,12 +26,7 @@ interface ChartAIAnalysis {
   warning: string;
 }
 
-const WHATSAPP_NUMBER = '27784278143';
-const WHATSAPP_LINK = `https://wa.me/${WHATSAPP_NUMBER}?text=Hi%2C%20I%20need%20a%20Midnight%20Panda%20license%20key`;
-
 export default function ChartAnalysis({ onNavigate }: ChartAnalysisProps) {
-  const { checkLicenseValidity } = useAuth();
-  const hasLicense = checkLicenseValidity();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -69,6 +63,19 @@ export default function ChartAnalysis({ onNavigate }: ChartAnalysisProps) {
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
+  const fileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const result = reader.result as string;
+        const base64 = result.split(',')[1];
+        resolve(base64);
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  };
+
   const handleAnalyze = async () => {
     if (!selectedFile) return;
     setIsAnalyzing(true);
@@ -76,20 +83,11 @@ export default function ChartAnalysis({ onNavigate }: ChartAnalysisProps) {
     setAnalysis(null);
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Not authenticated');
-
-      const ext = selectedFile.name.split('.').pop() || 'jpg';
-      const filePath = `${user.id}/${Date.now()}.${ext}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from('chart-uploads')
-        .upload(filePath, selectedFile);
-
-      if (uploadError) throw new Error('Failed to upload chart');
+      const imageBase64 = await fileToBase64(selectedFile);
+      const mimeType = selectedFile.type || 'image/jpeg';
 
       const { data, error: fnError } = await supabase.functions.invoke('analyze-chart', {
-        body: { imagePath: filePath, pair, timeframe, notes },
+        body: { imageBase64, mimeType, pair, timeframe, notes },
       });
 
       if (fnError) throw new Error(fnError.message || 'Analysis failed');
@@ -99,53 +97,12 @@ export default function ChartAnalysis({ onNavigate }: ChartAnalysisProps) {
       } else {
         throw new Error('No analysis returned');
       }
-
-      // Clean up uploaded file
-      await supabase.storage.from('chart-uploads').remove([filePath]);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Analysis failed');
     } finally {
       setIsAnalyzing(false);
     }
   };
-
-  if (!hasLicense) {
-    return (
-      <div className="min-h-screen pb-24 bg-background">
-        <header className="sticky top-0 z-40 bg-background/95 backdrop-blur-xl border-b border-border">
-          <div className="px-4 py-4">
-            <h1 className="text-xl font-semibold text-foreground font-display">Chart Analysis</h1>
-          </div>
-        </header>
-        <div className="flex flex-col items-center justify-center px-4 py-16">
-          <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mb-6">
-            <Lock className="w-10 h-10 text-primary" />
-          </div>
-          <h2 className="text-2xl font-semibold text-foreground mb-2 font-display">License Required</h2>
-          <p className="text-muted-foreground text-center mb-6 max-w-sm">
-            Upload your charts and get AI-powered analysis with Entry, SL & TP levels.
-          </p>
-          <div className="flex flex-col gap-3 w-full max-w-xs">
-            <Button onClick={() => onNavigate('profile')} className="bg-primary text-primary-foreground hover:bg-primary/90">
-              Activate License
-            </Button>
-            <a
-              href={WHATSAPP_LINK}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-[hsl(142,70%,45%)]/10 border border-[hsl(142,70%,45%)]/30 text-[hsl(142,70%,45%)] text-sm font-medium hover:bg-[hsl(142,70%,45%)]/20 transition-colors"
-            >
-              <MessageCircle className="w-4 h-4" />
-              WhatsApp: 078 427 8143
-            </a>
-            <p className="text-xs text-muted-foreground text-center">
-              Contact us on WhatsApp to get your license key
-            </p>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen pb-24 bg-background">
@@ -250,7 +207,6 @@ export default function ChartAnalysis({ onNavigate }: ChartAnalysisProps) {
         {/* Analysis result */}
         {analysis && (
           <div className="space-y-3 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            {/* Header */}
             <div className="glass-card rounded-xl p-4 border border-primary/30">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
@@ -268,7 +224,6 @@ export default function ChartAnalysis({ onNavigate }: ChartAnalysisProps) {
               <p className="text-sm text-muted-foreground">{analysis.summary}</p>
             </div>
 
-            {/* Patterns */}
             {analysis.patterns.length > 0 && (
               <div className="glass-card rounded-xl p-4">
                 <p className="text-xs text-muted-foreground uppercase font-semibold mb-2">Patterns Identified</p>
@@ -280,7 +235,6 @@ export default function ChartAnalysis({ onNavigate }: ChartAnalysisProps) {
               </div>
             )}
 
-            {/* Entry / SL / TP */}
             <div className="space-y-2">
               <div className="p-3 rounded-lg bg-primary/5 border border-primary/20">
                 <div className="flex items-center justify-between mb-1">
@@ -311,13 +265,11 @@ export default function ChartAnalysis({ onNavigate }: ChartAnalysisProps) {
               </div>
             </div>
 
-            {/* R:R */}
             <div className="glass-card rounded-xl p-4 text-center">
               <p className="text-xs text-muted-foreground mb-1">Risk : Reward</p>
               <p className="text-2xl font-bold text-foreground">{analysis.riskReward}</p>
             </div>
 
-            {/* Key Levels */}
             {analysis.keyLevels.length > 0 && (
               <div className="glass-card rounded-xl p-4">
                 <p className="text-xs text-muted-foreground uppercase font-semibold mb-2">Key Levels</p>
@@ -329,7 +281,6 @@ export default function ChartAnalysis({ onNavigate }: ChartAnalysisProps) {
               </div>
             )}
 
-            {/* Indicators */}
             {analysis.indicators.length > 0 && (
               <div className="glass-card rounded-xl p-4">
                 <p className="text-xs text-muted-foreground uppercase font-semibold mb-2">Indicators</p>
@@ -341,7 +292,6 @@ export default function ChartAnalysis({ onNavigate }: ChartAnalysisProps) {
               </div>
             )}
 
-            {/* Warning */}
             {analysis.warning && (
               <div className="p-3 rounded-lg bg-yellow-500/10 border border-yellow-500/20 text-sm text-yellow-400 flex items-start gap-2">
                 <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
