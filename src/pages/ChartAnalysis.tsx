@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react';
-import { Upload, Loader2, Target, AlertTriangle, TrendingUp, Shield, BarChart3, X } from 'lucide-react';
+import { Upload, Loader2, Target, AlertTriangle, TrendingUp, Shield, BarChart3, X, Lock, MessageCircle } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -26,7 +27,12 @@ interface ChartAIAnalysis {
   warning: string;
 }
 
+const WHATSAPP_NUMBER = '27784278143';
+const WHATSAPP_LINK = `https://wa.me/${WHATSAPP_NUMBER}?text=Hi%2C%20I%20need%20a%20Midnight%20Panda%20license%20key`;
+
 export default function ChartAnalysis({ onNavigate }: ChartAnalysisProps) {
+  const { checkLicenseValidity } = useAuth();
+  const hasLicense = checkLicenseValidity();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -103,6 +109,37 @@ export default function ChartAnalysis({ onNavigate }: ChartAnalysisProps) {
       setIsAnalyzing(false);
     }
   };
+
+  if (!hasLicense) {
+    return (
+      <div className="min-h-screen pb-24 bg-background">
+        <header className="sticky top-0 z-40 bg-background/95 backdrop-blur-xl border-b border-border">
+          <div className="px-4 py-4">
+            <h1 className="text-xl font-semibold text-foreground font-display">Chart Analysis</h1>
+          </div>
+        </header>
+        <div className="flex flex-col items-center justify-center px-4 py-16">
+          <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mb-6">
+            <Lock className="w-10 h-10 text-primary" />
+          </div>
+          <h2 className="text-2xl font-semibold text-foreground mb-2 font-display">License Required</h2>
+          <p className="text-muted-foreground text-center mb-6 max-w-sm">
+            Upload your charts and get AI-powered analysis with Entry, SL & TP levels.
+          </p>
+          <div className="flex flex-col gap-3 w-full max-w-xs">
+            <Button onClick={() => onNavigate('profile')} className="bg-primary text-primary-foreground hover:bg-primary/90">
+              Activate License
+            </Button>
+            <a href={WHATSAPP_LINK} target="_blank" rel="noopener noreferrer"
+              className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-[hsl(142,70%,45%)]/10 border border-[hsl(142,70%,45%)]/30 text-[hsl(142,70%,45%)] text-sm font-medium hover:bg-[hsl(142,70%,45%)]/20 transition-colors">
+              <MessageCircle className="w-4 h-4" /> WhatsApp: 078 427 8143
+            </a>
+            <p className="text-xs text-muted-foreground text-center">Contact us on WhatsApp to get your license key</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen pb-24 bg-background">
