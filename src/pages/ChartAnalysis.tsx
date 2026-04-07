@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react';
-import { Upload, Loader2, Target, AlertTriangle, TrendingUp, Shield, BarChart3, X } from 'lucide-react';
+import { Upload, Loader2, Target, AlertTriangle, TrendingUp, Shield, BarChart3, X, Lock, MessageCircle } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -26,7 +27,12 @@ interface ChartAIAnalysis {
   warning: string;
 }
 
+const WHATSAPP_NUMBER = '27784278143';
+const WHATSAPP_LINK = `https://wa.me/${WHATSAPP_NUMBER}?text=Hi%2C%20I%20need%20a%20Midnight%20Panda%20license%20key`;
+
 export default function ChartAnalysis({ onNavigate }: ChartAnalysisProps) {
+  const { checkLicenseValidity } = useAuth();
+  const hasLicense = checkLicenseValidity();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
