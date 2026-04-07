@@ -68,6 +68,7 @@ function AppContent() {
         {activeTab === 'leaderboard' && <Leaderboard />}
         {activeTab === 'chart-analysis' && <ChartAnalysis onNavigate={(tab: string) => setActiveTab(tab as TabName)} />}
         {activeTab === 'risk-calc' && <RiskCalculator />}
+        {activeTab === 'sentiment' && <Sentiment />}
         {activeTab === 'profile' && <Profile onNavigate={setCurrentPage} />}
       </main>
       <BottomNav activeTab={activeTab} onTabChange={setActiveTab} />
