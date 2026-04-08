@@ -38,6 +38,75 @@ export type Database = {
         }
         Relationships: []
       }
+      license_keys: {
+        Row: {
+          activated_at: string | null
+          activated_by_user_id: string | null
+          created_at: string
+          created_by_user_id: string | null
+          customer_email: string
+          duration: Database["public"]["Enums"]["license_duration"]
+          expires_at: string | null
+          id: string
+          is_active: boolean
+          license_key: string
+          updated_at: string
+        }
+        Insert: {
+          activated_at?: string | null
+          activated_by_user_id?: string | null
+          created_at?: string
+          created_by_user_id?: string | null
+          customer_email: string
+          duration: Database["public"]["Enums"]["license_duration"]
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          license_key: string
+          updated_at?: string
+        }
+        Update: {
+          activated_at?: string | null
+          activated_by_user_id?: string | null
+          created_at?: string
+          created_by_user_id?: string | null
+          customer_email?: string
+          duration?: Database["public"]["Enums"]["license_duration"]
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          license_key?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          display_name: string | null
+          email: string
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          display_name?: string | null
+          email: string
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          display_name?: string | null
+          email?: string
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       trader_profiles: {
         Row: {
           avatar_emoji: string
@@ -86,15 +155,100 @@ export type Database = {
         }
         Relationships: []
       }
+      user_licenses: {
+        Row: {
+          activated_at: string
+          created_at: string
+          duration: Database["public"]["Enums"]["license_duration"]
+          expires_at: string | null
+          id: string
+          is_active: boolean
+          license_key: string
+          license_key_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          activated_at: string
+          created_at?: string
+          duration: Database["public"]["Enums"]["license_duration"]
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          license_key: string
+          license_key_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          activated_at?: string
+          created_at?: string
+          duration?: Database["public"]["Enums"]["license_duration"]
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          license_key?: string
+          license_key_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_licenses_license_key_id_fkey"
+            columns: ["license_key_id"]
+            isOneToOne: true
+            referencedRelation: "license_keys"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      activate_license_key: {
+        Args: { _license_key: string }
+        Returns: {
+          activated_at: string
+          duration: Database["public"]["Enums"]["license_duration"]
+          expires_at: string
+          is_active: boolean
+          license_key: string
+        }[]
+      }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "moderator" | "user"
+      license_duration: "3months" | "6months" | "12months" | "lifetime"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -221,6 +375,9 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "moderator", "user"],
+      license_duration: ["3months", "6months", "12months", "lifetime"],
+    },
   },
 } as const
