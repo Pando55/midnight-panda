@@ -96,8 +96,8 @@ change = daily price change in points. changePercent = daily percentage change. 
     if (!response.ok) {
       const t = await response.text();
       console.error("AI gateway error:", response.status, t);
-      return new Response(JSON.stringify({ error: "Market data unavailable" }), {
-        status: response.status, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      return new Response(JSON.stringify({ data: FALLBACK_MARKET_DATA, timestamp: now.toISOString(), fallback: true }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
