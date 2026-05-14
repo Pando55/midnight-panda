@@ -66,16 +66,7 @@ change = daily price change in points. changePercent = daily percentage change. 
     const data = await response.json();
     const content = data.choices?.[0]?.message?.content || "";
 
-    let marketData;
-    try {
-      const jsonStr = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-      marketData = JSON.parse(jsonStr);
-    } catch {
-      console.error("Failed to parse market data:", content);
-      return new Response(JSON.stringify({ error: "Failed to parse market data" }), {
-        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    const marketData = parseMarketJSON(content) ?? FALLBACK_MARKET_DATA;
 
     return new Response(JSON.stringify({ data: marketData, timestamp: now.toISOString() }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
