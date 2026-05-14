@@ -181,7 +181,6 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
                     </div>
                   ))}
                 </div>
-                </div>
                 {signal.status === 'ACTIVE' && hasValidLicense && (
                   <button
                     onClick={() => setBrokerSignal(signal)}
