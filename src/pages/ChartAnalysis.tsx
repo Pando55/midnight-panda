@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { Upload, Loader2, Target, AlertTriangle, TrendingUp, Shield, BarChart3, X, Lock, MessageCircle } from 'lucide-react';
+import { Upload, Loader2, Target, AlertTriangle, TrendingUp, Shield, BarChart3, X, Lock, MessageCircle, Camera } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
