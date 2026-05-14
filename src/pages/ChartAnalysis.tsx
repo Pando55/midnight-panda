@@ -190,6 +190,13 @@ export default function ChartAnalysis({ onNavigate }: ChartAnalysisProps) {
           ref={fileInputRef}
           type="file"
           accept="image/*"
+          onChange={handleFileSelect}
+          className="hidden"
+        />
+        <input
+          ref={cameraInputRef}
+          type="file"
+          accept="image/*"
           capture="environment"
           onChange={handleFileSelect}
           className="hidden"
