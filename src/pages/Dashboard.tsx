@@ -20,6 +20,8 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
   const { data: liveMarketData, lastUpdated, refresh: refreshMarkets, isLoading: marketsLoading } = useMarketData();
   const [currentTime, setCurrentTime] = useState(new Date());
 
+  const [brokerSignal, setBrokerSignal] = useState<TradingSignal | null>(null);
+
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
