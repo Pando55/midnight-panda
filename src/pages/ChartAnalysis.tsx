@@ -34,6 +34,7 @@ export default function ChartAnalysis({ onNavigate }: ChartAnalysisProps) {
   const { checkLicenseValidity } = useAuth();
   const hasLicense = checkLicenseValidity();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
 
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
