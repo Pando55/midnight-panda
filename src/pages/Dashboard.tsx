@@ -6,6 +6,8 @@ import { useMarketData } from '@/hooks/useMarketData';
 import { newsItems, sampleSignals, categoryColors, formatPrice } from '@/lib/data';
 import { getMarketSessions } from '@/lib/data';
 import { cn, timeAgo } from '@/lib/utils';
+import SendToBrokerDialog from '@/components/SendToBrokerDialog';
+import type { TradingSignal } from '@/types';
 
 interface DashboardProps {
   onNavigate: (page: string) => void;
