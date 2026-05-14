@@ -181,11 +181,25 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
                     </div>
                   ))}
                 </div>
+                </div>
+                {signal.status === 'ACTIVE' && hasValidLicense && (
+                  <button
+                    onClick={() => setBrokerSignal(signal)}
+                    className="mt-3 w-full inline-flex items-center justify-center gap-2 rounded-md py-2 text-sm font-medium bg-trading-orange text-foreground hover:opacity-90 transition-opacity"
+                  >
+                    <Send className="w-3.5 h-3.5" /> Send to MT4 / MT5
+                  </button>
+                )}
               </div>
             ))}
           </div>
         </section>
       </div>
+      <SendToBrokerDialog
+        signal={brokerSignal}
+        open={!!brokerSignal}
+        onOpenChange={(o) => !o && setBrokerSignal(null)}
+      />
     </div>
   );
 }
