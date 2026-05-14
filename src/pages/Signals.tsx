@@ -85,16 +85,27 @@ export default function Signals({ onNavigate }: SignalsProps) {
             </div>
           ) : (
             filteredSignals.map((signal) => (
-              <SignalCard key={signal.id} signal={signal} onCopy={copy} copied={copied} />
+              <SignalCard
+                key={signal.id}
+                signal={signal}
+                onCopy={copy}
+                copied={copied}
+                onSendToBroker={() => setBrokerSignal(signal)}
+              />
             ))
           )}
         </div>
       </div>
+      <SendToBrokerDialog
+        signal={brokerSignal}
+        open={!!brokerSignal}
+        onOpenChange={(o) => !o && setBrokerSignal(null)}
+      />
     </div>
   );
 }
 
-function SignalCard({ signal, onCopy, copied }: { signal: TradingSignal; onCopy: (t: string) => void; copied: boolean }) {
+function SignalCard({ signal, onCopy, copied, onSendToBroker }: { signal: TradingSignal; onCopy: (t: string) => void; copied: boolean; onSendToBroker: () => void }) {
   const rr = calculateRiskReward(signal.entryPrice, signal.stopLoss, signal.takeProfit, signal.direction);
   const statusColors: Record<string, string> = {
     ACTIVE: 'bg-trading-orange/20 text-trading-orange border-trading-orange/30',
