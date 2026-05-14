@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { Upload, Loader2, Target, AlertTriangle, TrendingUp, Shield, BarChart3, X, Lock, MessageCircle } from 'lucide-react';
+import { Upload, Loader2, Target, AlertTriangle, TrendingUp, Shield, BarChart3, X, Lock, MessageCircle, Camera } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -34,6 +34,7 @@ export default function ChartAnalysis({ onNavigate }: ChartAnalysisProps) {
   const { checkLicenseValidity } = useAuth();
   const hasLicense = checkLicenseValidity();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
 
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
@@ -153,18 +154,26 @@ export default function ChartAnalysis({ onNavigate }: ChartAnalysisProps) {
       <div className="px-4 py-4 space-y-4">
         {/* Upload area */}
         {!preview ? (
-          <button
-            onClick={() => fileInputRef.current?.click()}
-            className="w-full border-2 border-dashed border-border rounded-xl p-8 flex flex-col items-center gap-3 hover:border-primary/50 transition-colors"
-          >
-            <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center">
-              <Upload className="w-7 h-7 text-primary" />
-            </div>
-            <div className="text-center">
-              <p className="text-sm font-medium text-foreground">Tap to upload chart</p>
-              <p className="text-xs text-muted-foreground mt-1">JPG, PNG — max 5MB</p>
-            </div>
-          </button>
+          <div className="space-y-3">
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className="w-full border-2 border-dashed border-border rounded-xl p-8 flex flex-col items-center gap-3 hover:border-primary/50 transition-colors"
+            >
+              <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center">
+                <Upload className="w-7 h-7 text-primary" />
+              </div>
+              <div className="text-center">
+                <p className="text-sm font-medium text-foreground">Upload from gallery</p>
+                <p className="text-xs text-muted-foreground mt-1">JPG, PNG, screenshot — max 5MB</p>
+              </div>
+            </button>
+            <button
+              onClick={() => cameraInputRef.current?.click()}
+              className="w-full rounded-xl p-3 flex items-center justify-center gap-2 bg-secondary text-foreground text-sm font-medium hover:bg-secondary/80 transition-colors"
+            >
+              <Camera className="w-4 h-4" /> Or take a photo
+            </button>
+          </div>
         ) : (
           <div className="relative rounded-xl overflow-hidden border border-border">
             <img src={preview} alt="Chart preview" className="w-full max-h-64 object-contain bg-card" />
@@ -179,6 +188,13 @@ export default function ChartAnalysis({ onNavigate }: ChartAnalysisProps) {
 
         <input
           ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          onChange={handleFileSelect}
+          className="hidden"
+        />
+        <input
+          ref={cameraInputRef}
           type="file"
           accept="image/*"
           capture="environment"

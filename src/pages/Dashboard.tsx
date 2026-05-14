@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
-import { TrendingUp, TrendingDown, Globe, AlertTriangle, Zap, Target, BarChart3, ArrowRight, Copy, Check, RefreshCw } from 'lucide-react';
+import { TrendingUp, TrendingDown, Globe, AlertTriangle, Zap, Target, BarChart3, ArrowRight, Copy, Check, RefreshCw, Send } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useCopy } from '@/hooks/useCopy';
 import { useMarketData } from '@/hooks/useMarketData';
 import { newsItems, sampleSignals, categoryColors, formatPrice } from '@/lib/data';
 import { getMarketSessions } from '@/lib/data';
 import { cn, timeAgo } from '@/lib/utils';
+import SendToBrokerDialog from '@/components/SendToBrokerDialog';
+import type { TradingSignal } from '@/types';
 
 interface DashboardProps {
   onNavigate: (page: string) => void;
@@ -17,6 +19,8 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
   const { copied, copy } = useCopy();
   const { data: liveMarketData, lastUpdated, refresh: refreshMarkets, isLoading: marketsLoading } = useMarketData();
   const [currentTime, setCurrentTime] = useState(new Date());
+
+  const [brokerSignal, setBrokerSignal] = useState<TradingSignal | null>(null);
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
@@ -177,11 +181,24 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
                     </div>
                   ))}
                 </div>
+                {signal.status === 'ACTIVE' && hasValidLicense && (
+                  <button
+                    onClick={() => setBrokerSignal(signal)}
+                    className="mt-3 w-full inline-flex items-center justify-center gap-2 rounded-md py-2 text-sm font-medium bg-trading-orange text-foreground hover:opacity-90 transition-opacity"
+                  >
+                    <Send className="w-3.5 h-3.5" /> Send to MT4 / MT5
+                  </button>
+                )}
               </div>
             ))}
           </div>
         </section>
       </div>
+      <SendToBrokerDialog
+        signal={brokerSignal}
+        open={!!brokerSignal}
+        onOpenChange={(o) => !o && setBrokerSignal(null)}
+      />
     </div>
   );
 }
