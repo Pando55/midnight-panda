@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { TrendingUp, TrendingDown, Globe, AlertTriangle, Zap, Target, BarChart3, ArrowRight, Copy, Check, RefreshCw } from 'lucide-react';
+import { TrendingUp, TrendingDown, Globe, AlertTriangle, Zap, Target, BarChart3, ArrowRight, Copy, Check, RefreshCw, Send } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useCopy } from '@/hooks/useCopy';
 import { useMarketData } from '@/hooks/useMarketData';
