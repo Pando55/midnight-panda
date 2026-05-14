@@ -1,11 +1,12 @@
 import { useState } from 'react';
-import { Search, Filter, Copy, Check, Lock, AlertCircle } from 'lucide-react';
+import { Search, Filter, Copy, Check, Lock, AlertCircle, Send } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useCopy } from '@/hooks/useCopy';
 import { sampleSignals, categoryColors, formatPrice, calculateRiskReward } from '@/lib/data';
 import { cn, timeAgo } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import SendToBrokerDialog from '@/components/SendToBrokerDialog';
 import type { TradingSignal, AssetCategory } from '@/types';
 
 interface SignalsProps { onNavigate: (page: string) => void; }
@@ -17,6 +18,7 @@ export default function Signals({ onNavigate }: SignalsProps) {
   const [activeTab, setActiveTab] = useState<'active' | 'history'>('active');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<AssetCategory | 'ALL'>('ALL');
+  const [brokerSignal, setBrokerSignal] = useState<TradingSignal | null>(null);
 
   const filteredSignals = sampleSignals.filter(signal => {
     const matchesSearch = signal.asset.toLowerCase().includes(searchQuery.toLowerCase());
@@ -83,16 +85,27 @@ export default function Signals({ onNavigate }: SignalsProps) {
             </div>
           ) : (
             filteredSignals.map((signal) => (
-              <SignalCard key={signal.id} signal={signal} onCopy={copy} copied={copied} />
+              <SignalCard
+                key={signal.id}
+                signal={signal}
+                onCopy={copy}
+                copied={copied}
+                onSendToBroker={() => setBrokerSignal(signal)}
+              />
             ))
           )}
         </div>
       </div>
+      <SendToBrokerDialog
+        signal={brokerSignal}
+        open={!!brokerSignal}
+        onOpenChange={(o) => !o && setBrokerSignal(null)}
+      />
     </div>
   );
 }
 
-function SignalCard({ signal, onCopy, copied }: { signal: TradingSignal; onCopy: (t: string) => void; copied: boolean }) {
+function SignalCard({ signal, onCopy, copied, onSendToBroker }: { signal: TradingSignal; onCopy: (t: string) => void; copied: boolean; onSendToBroker: () => void }) {
   const rr = calculateRiskReward(signal.entryPrice, signal.stopLoss, signal.takeProfit, signal.direction);
   const statusColors: Record<string, string> = {
     ACTIVE: 'bg-trading-orange/20 text-trading-orange border-trading-orange/30',
@@ -133,6 +146,16 @@ function SignalCard({ signal, onCopy, copied }: { signal: TradingSignal; onCopy:
         <span>{timeAgo(signal.createdAt)}</span>
       </div>
       <p className="text-xs text-muted-foreground mt-2 line-clamp-2">{signal.analysis}</p>
+      {signal.status === 'ACTIVE' && (
+        <Button
+          onClick={onSendToBroker}
+          size="sm"
+          className="w-full mt-3 bg-trading-orange hover:bg-trading-orange/90 text-foreground"
+        >
+          <Send className="w-3.5 h-3.5 mr-2" />
+          Send to MT4 / MT5
+        </Button>
+      )}
     </div>
   );
 }
