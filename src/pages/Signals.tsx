@@ -1,11 +1,12 @@
 import { useState } from 'react';
-import { Search, Filter, Copy, Check, Lock, AlertCircle } from 'lucide-react';
+import { Search, Filter, Copy, Check, Lock, AlertCircle, Send } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useCopy } from '@/hooks/useCopy';
 import { sampleSignals, categoryColors, formatPrice, calculateRiskReward } from '@/lib/data';
 import { cn, timeAgo } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import SendToBrokerDialog from '@/components/SendToBrokerDialog';
 import type { TradingSignal, AssetCategory } from '@/types';
 
 interface SignalsProps { onNavigate: (page: string) => void; }
