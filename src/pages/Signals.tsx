@@ -146,6 +146,16 @@ function SignalCard({ signal, onCopy, copied, onSendToBroker }: { signal: Tradin
         <span>{timeAgo(signal.createdAt)}</span>
       </div>
       <p className="text-xs text-muted-foreground mt-2 line-clamp-2">{signal.analysis}</p>
+      {signal.status === 'ACTIVE' && (
+        <Button
+          onClick={onSendToBroker}
+          size="sm"
+          className="w-full mt-3 bg-trading-orange hover:bg-trading-orange/90 text-foreground"
+        >
+          <Send className="w-3.5 h-3.5 mr-2" />
+          Send to MT4 / MT5
+        </Button>
+      )}
     </div>
   );
 }
