@@ -18,6 +18,7 @@ export default function Signals({ onNavigate }: SignalsProps) {
   const [activeTab, setActiveTab] = useState<'active' | 'history'>('active');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<AssetCategory | 'ALL'>('ALL');
+  const [brokerSignal, setBrokerSignal] = useState<TradingSignal | null>(null);
 
   const filteredSignals = sampleSignals.filter(signal => {
     const matchesSearch = signal.asset.toLowerCase().includes(searchQuery.toLowerCase());
