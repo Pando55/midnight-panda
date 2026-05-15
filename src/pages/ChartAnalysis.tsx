@@ -18,6 +18,13 @@ interface ChartAIAnalysis {
   confidence: number;
   summary: string;
   patterns: string[];
+  timeframeAlignment?: {
+    ltf: string;
+    htfBias: string;
+    htfReasoning: string;
+    aligned: boolean;
+    checkedTimeframes: string[];
+  };
   entry: { price: string; reason: string };
   stopLoss: { price: string; reason: string };
   takeProfit: { price: string; reason: string };
