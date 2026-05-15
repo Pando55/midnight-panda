@@ -16,50 +16,29 @@ serve(async (req) => {
 
     if (!imageBase64) throw new Error("No chart image provided");
 
-    const prompt = `You are a senior multi-timeframe technical analyst for a trading signals app called Midnight Panda. Analyze this chart image with STRICT top-down (HTF -> LTF) confluence logic.
+    const prompt = `You are a senior technical analyst for a scalping signals app called Midnight Panda. Analyze this chart image and give a fast, decisive signal based on the timeframe shown.
 
 ${pair ? `Currency Pair / Asset: ${pair}` : "Identify the asset from the chart if possible."}
 ${timeframe ? `Timeframe shown: ${timeframe}` : "Identify the timeframe shown."}
 ${notes ? `Trader's Notes: ${notes}` : ""}
 
-CRITICAL RULES — multi-timeframe alignment (do this even if only ONE chart is uploaded):
-1. Identify the timeframe shown (LTF). Then INFER the higher timeframes you would need to confirm the trade:
-   - M1 -> must align with M5, M15 and H1 bias
-   - M5 -> must align with M15, H1, H4 bias
-   - M15 -> must align with H1, H4 bias
-   - H1 -> must align with H4, D1 bias
-   - H4 -> must align with D1, W1 bias
-   - D1 -> must align with W1, MN bias
-2. From the visible price action, structure, swing points and any indicators in the image, REASON about what the inferred HTF bias most likely is (bullish / bearish / ranging) based on:
-   - the position of price relative to recent swing highs/lows
-   - the slope and structure of the visible trend
-   - liquidity zones, order blocks, FVGs, premium/discount zones
-   - Wyckoff phase if identifiable
-3. Only give a BULLISH or BEARISH signal if the LTF setup ALIGNS with the inferred HTF bias. If it conflicts, the sentiment MUST be NEUTRAL and the warning MUST explain the HTF/LTF conflict.
-4. Entry, SL and TP must respect HTF structure (e.g. SL beyond HTF swing, TP at HTF liquidity / opposing zone).
+Read price action, structure, swing points, liquidity zones, order blocks, FVGs, and any visible indicators. Give a clear BULLISH / BEARISH / NEUTRAL call with Entry, SL, and TP based on what is visible on this chart.
 
 Provide analysis in this EXACT JSON format (no markdown, raw JSON only):
 {
   "asset": "identified or provided asset name",
-  "timeframe": "identified or provided timeframe (LTF shown)",
+  "timeframe": "identified or provided timeframe",
   "sentiment": "BULLISH" or "BEARISH" or "NEUTRAL",
   "confidence": number between 60-95,
-  "summary": "2-3 sentence overview tying LTF setup to inferred HTF bias",
+  "summary": "2-3 sentence overview of the setup",
   "patterns": ["list of chart patterns identified e.g. Double Bottom, Order Block, FVG"],
-  "timeframeAlignment": {
-    "ltf": "the timeframe shown",
-    "htfBias": "BULLISH" or "BEARISH" or "RANGING",
-    "htfReasoning": "1-2 sentences explaining the inferred higher-timeframe bias from what is visible",
-    "aligned": true or false,
-    "checkedTimeframes": ["list the HTFs you reasoned against, e.g. M15, H1, H4"]
-  },
-  "entry": { "price": "suggested entry price as string", "reason": "Why enter here, referencing HTF + LTF confluence" },
-  "stopLoss": { "price": "stop loss price as string", "reason": "Why SL here, tied to HTF/LTF structure" },
-  "takeProfit": { "price": "take profit price as string", "reason": "Why this target, referencing HTF liquidity / level" },
+  "entry": { "price": "suggested entry price as string", "reason": "Why enter here" },
+  "stopLoss": { "price": "stop loss price as string", "reason": "Why SL here" },
+  "takeProfit": { "price": "take profit price as string", "reason": "Why this target" },
   "riskReward": "risk to reward ratio like 1:2.5",
   "keyLevels": ["important price levels"],
   "indicators": ["visible indicators and readings"],
-  "warning": "risk factors — MUST mention HTF/LTF conflict if aligned=false"
+  "warning": "risk factors"
 }`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
