@@ -295,6 +295,38 @@ export default function ChartAnalysis({ onNavigate }: ChartAnalysisProps) {
               </div>
             )}
 
+            {analysis.timeframeAlignment && (
+              <div className={cn('rounded-xl p-4 border',
+                analysis.timeframeAlignment.aligned
+                  ? 'bg-[hsl(var(--trading-green))]/5 border-[hsl(var(--trading-green))]/30'
+                  : 'bg-yellow-500/5 border-yellow-500/30')}>
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-xs uppercase font-semibold text-muted-foreground">Timeframe Alignment</p>
+                  <span className={cn('text-xs font-bold px-2 py-0.5 rounded-full',
+                    analysis.timeframeAlignment.aligned
+                      ? 'bg-[hsl(var(--trading-green))]/20 text-[hsl(var(--trading-green))]'
+                      : 'bg-yellow-500/20 text-yellow-400')}>
+                    {analysis.timeframeAlignment.aligned ? '✓ ALIGNED' : '⚠ CONFLICT'}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
+                  <span className="font-mono px-2 py-0.5 rounded bg-secondary text-foreground">{analysis.timeframeAlignment.ltf}</span>
+                  <span>→</span>
+                  <span>HTF bias:</span>
+                  <span className="font-bold text-foreground">{analysis.timeframeAlignment.htfBias}</span>
+                </div>
+                <p className="text-sm text-foreground/90 mb-2">{analysis.timeframeAlignment.htfReasoning}</p>
+                {analysis.timeframeAlignment.checkedTimeframes?.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5">
+                    <span className="text-xs text-muted-foreground">Checked against:</span>
+                    {analysis.timeframeAlignment.checkedTimeframes.map((tf, i) => (
+                      <span key={i} className="text-xs font-mono px-1.5 py-0.5 rounded bg-muted text-muted-foreground">{tf}</span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
             <div className="space-y-2">
               <div className="p-3 rounded-lg bg-primary/5 border border-primary/20">
                 <div className="flex items-center justify-between mb-1">
