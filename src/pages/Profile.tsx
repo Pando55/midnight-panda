@@ -12,9 +12,10 @@ interface ProfileProps { onNavigate: (page: 'login' | 'signup' | 'dashboard') =>
 
 const LICENSE_TIERS: { duration: LicenseDuration; label: string; color: string }[] = [
   { duration: '3months', label: '3 Months', color: 'bg-blue-500' },
-  { duration: '6months', label: '6 Months', color: 'bg-purple-500' },
-  { duration: '12months', label: '12 Months', color: 'bg-pink-500' },
-  { duration: 'lifetime', label: 'Lifetime', color: 'bg-trading-orange' },
+  { duration: '6months', label: '6 Months', color: 'bg-cyan-500' },
+  { duration: '12months', label: '12 Months', color: 'bg-trading-orange' },
+  { duration: '18months', label: '18 Months', color: 'bg-yellow-500' },
+  { duration: 'lifetime', label: 'Lifetime', color: 'bg-purple-500' },
 ];
 
 export default function Profile({ onNavigate }: ProfileProps) {
