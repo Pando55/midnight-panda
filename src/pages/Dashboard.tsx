@@ -83,6 +83,22 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
           )}
         </div>
 
+        {canPush && permission !== 'granted' && (
+          <button
+            onClick={request}
+            className="w-full glass-card rounded-xl p-4 flex items-center gap-3 border border-trading-orange/30 hover:border-trading-orange/60 transition-all animate-slide-up"
+          >
+            <div className="w-10 h-10 rounded-full bg-trading-orange/20 flex items-center justify-center">
+              <BellRing className="w-5 h-5 text-trading-orange" />
+            </div>
+            <div className="text-left flex-1">
+              <p className="text-sm font-semibold text-foreground">Enable Push Notifications</p>
+              <p className="text-xs text-muted-foreground">Get instant alerts when new signals fire.</p>
+            </div>
+            <ArrowRight className="w-4 h-4 text-trading-orange" />
+          </button>
+        )}
+
         <section className="animate-slide-up animation-delay-100">
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Market Sessions</h3>
