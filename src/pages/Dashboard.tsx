@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
-import { TrendingUp, TrendingDown, Globe, AlertTriangle, Zap, Target, BarChart3, ArrowRight, Copy, Check, RefreshCw, Send } from 'lucide-react';
+import { TrendingUp, TrendingDown, Globe, AlertTriangle, Zap, Target, BarChart3, ArrowRight, Copy, Check, RefreshCw, Send, Bell, BellRing } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useCopy } from '@/hooks/useCopy';
 import { useMarketData } from '@/hooks/useMarketData';
+import { useNotifications } from '@/hooks/useNotifications';
 import { newsItems, sampleSignals, categoryColors, formatPrice } from '@/lib/data';
 import { getMarketSessions } from '@/lib/data';
 import { cn, timeAgo } from '@/lib/utils';
+import { hasFeature } from '@/lib/licenseTiers';
 import SendToBrokerDialog from '@/components/SendToBrokerDialog';
 import type { TradingSignal } from '@/types';
 
@@ -14,13 +16,27 @@ interface DashboardProps {
 }
 
 export default function Dashboard({ onNavigate }: DashboardProps) {
-  const { user, checkLicenseValidity } = useAuth();
+  const { user, license, checkLicenseValidity } = useAuth();
   const hasValidLicense = checkLicenseValidity();
+  const canPush = hasFeature(license?.duration, 'pushNotifications');
   const { copied, copy } = useCopy();
   const { data: liveMarketData, lastUpdated, refresh: refreshMarkets, isLoading: marketsLoading } = useMarketData();
+  const { permission, request, notify } = useNotifications();
   const [currentTime, setCurrentTime] = useState(new Date());
 
   const [brokerSignal, setBrokerSignal] = useState<TradingSignal | null>(null);
+
+  // Demo: fire a notification when a new active signal appears (lifecycle-safe)
+  useEffect(() => {
+    if (!canPush || permission !== 'granted') return;
+    const active = sampleSignals.find(s => s.status === 'ACTIVE');
+    if (active) {
+      const t = setTimeout(() => {
+        notify(`🎯 ${active.direction} ${active.asset}`, `Entry ${active.entryPrice} · SL ${active.stopLoss} · TP ${active.takeProfit}`);
+      }, 4000);
+      return () => clearTimeout(t);
+    }
+  }, [canPush, permission, notify]);
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
@@ -66,6 +82,22 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
             <p className="text-xs text-muted-foreground mt-1">Prices updated: {lastUpdated.toLocaleTimeString()}</p>
           )}
         </div>
+
+        {canPush && permission !== 'granted' && (
+          <button
+            onClick={request}
+            className="w-full glass-card rounded-xl p-4 flex items-center gap-3 border border-trading-orange/30 hover:border-trading-orange/60 transition-all animate-slide-up"
+          >
+            <div className="w-10 h-10 rounded-full bg-trading-orange/20 flex items-center justify-center">
+              <BellRing className="w-5 h-5 text-trading-orange" />
+            </div>
+            <div className="text-left flex-1">
+              <p className="text-sm font-semibold text-foreground">Enable Push Notifications</p>
+              <p className="text-xs text-muted-foreground">Get instant alerts when new signals fire.</p>
+            </div>
+            <ArrowRight className="w-4 h-4 text-trading-orange" />
+          </button>
+        )}
 
         <section className="animate-slide-up animation-delay-100">
           <div className="flex items-center justify-between mb-3">

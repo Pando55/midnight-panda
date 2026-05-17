@@ -6,7 +6,7 @@ export interface User {
   isAdmin?: boolean;
 }
 
-export type LicenseDuration = '3months' | '6months' | '12months' | 'lifetime';
+export type LicenseDuration = '3months' | '6months' | '12months' | '18months' | 'lifetime';
 
 export interface License {
   key: string;
@@ -92,7 +92,7 @@ export interface PositionSizeResult {
   units: number;
 }
 
-export type TabName = 'dashboard' | 'analyze' | 'signals' | 'risk-calc' | 'calendar' | 'education' | 'community' | 'leaderboard' | 'chart-analysis' | 'sentiment' | 'profile';
+export type TabName = 'dashboard' | 'analyze' | 'signals' | 'risk-calc' | 'calendar' | 'education' | 'community' | 'leaderboard' | 'chart-analysis' | 'sentiment' | 'ai-assistant' | 'profile';
 
 export interface AuthState {
   user: User | null;

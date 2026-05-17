@@ -1,4 +1,4 @@
-import { LayoutDashboard, BarChart3, Zap, User, GraduationCap, MessageCircle, Camera, Calendar } from 'lucide-react';
+import { LayoutDashboard, BarChart3, Zap, User, GraduationCap, Camera, Calendar, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { TabName } from '@/types';
 
@@ -9,9 +9,9 @@ interface BottomNavProps {
 
 const tabs: { id: TabName; label: string; icon: typeof LayoutDashboard }[] = [
   { id: 'dashboard', label: 'Home', icon: LayoutDashboard },
-  { id: 'analyze', label: 'Markets', icon: BarChart3 },
   { id: 'signals', label: 'Signals', icon: Zap },
   { id: 'chart-analysis', label: 'Charts', icon: Camera },
+  { id: 'ai-assistant', label: 'AI', icon: Sparkles },
   { id: 'calendar', label: 'Calendar', icon: Calendar },
   { id: 'education', label: 'Learn', icon: GraduationCap },
   { id: 'profile', label: 'Profile', icon: User },
