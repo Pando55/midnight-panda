@@ -13,6 +13,7 @@ import Leaderboard from '@/pages/Leaderboard';
 import ChartAnalysis from '@/pages/ChartAnalysis';
 import Sentiment from '@/pages/Sentiment';
 import Profile from '@/pages/Profile';
+import AIAssistant from '@/pages/AIAssistant';
 import BottomNav from '@/components/BottomNav';
 import InstallBanner from '@/components/InstallBanner';
 import { Loader2 } from 'lucide-react';
