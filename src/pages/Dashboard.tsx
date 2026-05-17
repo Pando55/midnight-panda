@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
-import { TrendingUp, TrendingDown, Globe, AlertTriangle, Zap, Target, BarChart3, ArrowRight, Copy, Check, RefreshCw, Send } from 'lucide-react';
+import { TrendingUp, TrendingDown, Globe, AlertTriangle, Zap, Target, BarChart3, ArrowRight, Copy, Check, RefreshCw, Send, Bell, BellRing } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useCopy } from '@/hooks/useCopy';
 import { useMarketData } from '@/hooks/useMarketData';
+import { useNotifications } from '@/hooks/useNotifications';
 import { newsItems, sampleSignals, categoryColors, formatPrice } from '@/lib/data';
 import { getMarketSessions } from '@/lib/data';
 import { cn, timeAgo } from '@/lib/utils';
+import { hasFeature } from '@/lib/licenseTiers';
 import SendToBrokerDialog from '@/components/SendToBrokerDialog';
 import type { TradingSignal } from '@/types';
 
