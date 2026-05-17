@@ -6,7 +6,7 @@ export interface User {
   isAdmin?: boolean;
 }
 
-export type LicenseDuration = '3months' | '6months' | '12months' | 'lifetime';
+export type LicenseDuration = '3months' | '6months' | '12months' | '18months' | 'lifetime';
 
 export interface License {
   key: string;
