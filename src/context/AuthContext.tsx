@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import type { User, License, LicenseDuration, AuthState, GeneratedKey } from '@/types';
+import { supabase } from '@/integrations/supabase/client';
 
-// Admin email - change this to your email
 const ADMIN_EMAIL = 'mohalethapelo93@gmail.com';
 
 interface AuthContextType extends AuthState {
@@ -12,41 +12,18 @@ interface AuthContextType extends AuthState {
   checkLicenseValidity: () => boolean;
   isAdmin: () => boolean;
   getGeneratedKeys: () => GeneratedKey[];
-  generateAndStoreKey: (email: string, duration: LicenseDuration) => GeneratedKey;
-  deactivateKey: (keyId: string) => void;
-  deleteKey: (keyId: string) => void;
+  refreshGeneratedKeys: () => Promise<void>;
+  generateAndStoreKey: (email: string, duration: LicenseDuration) => Promise<GeneratedKey | null>;
+  deactivateKey: (keyId: string) => Promise<void>;
+  deleteKey: (keyId: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const KEYS_STORAGE = 'midnight_panda_generated_keys';
-
-function loadKeys(): GeneratedKey[] {
-  try {
-    const stored = localStorage.getItem(KEYS_STORAGE);
-    if (stored) {
-      return JSON.parse(stored).map((k: GeneratedKey) => ({
-        ...k,
-        createdAt: new Date(k.createdAt),
-      }));
-    }
-  } catch {}
-  return [];
-}
-
-function saveKeys(keys: GeneratedKey[]) {
-  localStorage.setItem(KEYS_STORAGE, JSON.stringify(keys));
-}
-
-// Generate key in format P-XXXX-XXXX-XXXX
-function createLicenseKey(): string {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-  const part = () => {
-    let s = '';
-    for (let i = 0; i < 4; i++) s += chars[Math.floor(Math.random() * chars.length)];
-    return s;
-  };
-  return `P-${part()}-${part()}-${part()}`;
+async function callLicenseManager(body: Record<string, unknown>) {
+  const { data, error } = await supabase.functions.invoke('license-manager', { body });
+  if (error) return { success: false, error: error.message };
+  return data;
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -61,7 +38,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const storedUser = localStorage.getItem('midnight_panda_user');
     const storedLicense = localStorage.getItem('midnight_panda_license');
-    setGeneratedKeys(loadKeys());
 
     if (storedUser) {
       try {
@@ -78,15 +54,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  const refreshGeneratedKeys = useCallback(async () => {
+    if (state.user?.email?.toLowerCase() !== ADMIN_EMAIL) return;
+    const res = await callLicenseManager({ action: 'list', adminEmail: state.user.email });
+    if (res?.success) {
+      setGeneratedKeys(
+        (res.keys as any[]).map(k => ({
+          id: k.id,
+          email: k.customer_email,
+          key: k.license_key,
+          duration: k.duration,
+          createdAt: new Date(k.created_at),
+          isActive: k.is_active,
+        }))
+      );
+    }
+  }, [state.user]);
+
+  useEffect(() => { refreshGeneratedKeys(); }, [refreshGeneratedKeys]);
+
   const login = useCallback(async (email: string, password: string): Promise<boolean> => {
-    await new Promise(resolve => setTimeout(resolve, 800));
+    await new Promise(resolve => setTimeout(resolve, 400));
     if (email && password.length >= 6) {
       const user: User = {
-        id: 'user_' + Date.now(),
-        email,
-        name: email.split('@')[0],
-        createdAt: new Date(),
-        isAdmin: email.toLowerCase() === ADMIN_EMAIL,
+        id: 'user_' + Date.now(), email, name: email.split('@')[0],
+        createdAt: new Date(), isAdmin: email.toLowerCase() === ADMIN_EMAIL,
       };
       localStorage.setItem('midnight_panda_user', JSON.stringify(user));
       setState(prev => ({ ...prev, user, isAuthenticated: true }));
@@ -96,14 +88,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const signup = useCallback(async (email: string, password: string, name: string): Promise<boolean> => {
-    await new Promise(resolve => setTimeout(resolve, 800));
+    await new Promise(resolve => setTimeout(resolve, 400));
     if (email && password.length >= 6 && name) {
       const user: User = {
-        id: 'user_' + Date.now(),
-        email,
-        name,
-        createdAt: new Date(),
-        isAdmin: email.toLowerCase() === ADMIN_EMAIL,
+        id: 'user_' + Date.now(), email, name,
+        createdAt: new Date(), isAdmin: email.toLowerCase() === ADMIN_EMAIL,
       };
       localStorage.setItem('midnight_panda_user', JSON.stringify(user));
       setState(prev => ({ ...prev, user, isAuthenticated: true }));
@@ -116,73 +105,55 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     localStorage.removeItem('midnight_panda_user');
     localStorage.removeItem('midnight_panda_license');
     setState({ user: null, license: null, isAuthenticated: false, isLoading: false });
+    setGeneratedKeys([]);
   }, []);
 
   const isAdmin = useCallback((): boolean => {
     return state.user?.email?.toLowerCase() === ADMIN_EMAIL;
   }, [state.user]);
 
-  const getGeneratedKeys = useCallback((): GeneratedKey[] => {
-    return generatedKeys;
-  }, [generatedKeys]);
+  const getGeneratedKeys = useCallback((): GeneratedKey[] => generatedKeys, [generatedKeys]);
 
-  const generateAndStoreKey = useCallback((email: string, duration: LicenseDuration): GeneratedKey => {
+  const generateAndStoreKey = useCallback(async (email: string, duration: LicenseDuration): Promise<GeneratedKey | null> => {
+    const res = await callLicenseManager({ action: 'create', email, duration, adminEmail: state.user?.email });
+    if (!res?.success) return null;
+    const k = res.key;
     const newKey: GeneratedKey = {
-      id: 'key_' + Date.now(),
-      email,
-      key: createLicenseKey(),
-      duration,
-      createdAt: new Date(),
-      isActive: true,
+      id: k.id, email: k.customer_email, key: k.license_key,
+      duration: k.duration, createdAt: new Date(k.created_at), isActive: k.is_active,
     };
-    const updated = [newKey, ...generatedKeys];
-    setGeneratedKeys(updated);
-    saveKeys(updated);
+    setGeneratedKeys(prev => [newKey, ...prev]);
     return newKey;
-  }, [generatedKeys]);
+  }, [state.user]);
 
-  const deactivateKey = useCallback((keyId: string) => {
-    const updated = generatedKeys.map(k =>
-      k.id === keyId ? { ...k, isActive: false } : k
-    );
-    setGeneratedKeys(updated);
-    saveKeys(updated);
-  }, [generatedKeys]);
+  const deactivateKey = useCallback(async (keyId: string) => {
+    const res = await callLicenseManager({ action: 'deactivate', keyId, adminEmail: state.user?.email });
+    if (res?.success) {
+      setGeneratedKeys(prev => prev.map(k => k.id === keyId ? { ...k, isActive: false } : k));
+    }
+  }, [state.user]);
 
-  const deleteKey = useCallback((keyId: string) => {
-    const updated = generatedKeys.filter(k => k.id !== keyId);
-    setGeneratedKeys(updated);
-    saveKeys(updated);
-  }, [generatedKeys]);
+  const deleteKey = useCallback(async (keyId: string) => {
+    const res = await callLicenseManager({ action: 'delete', keyId, adminEmail: state.user?.email });
+    if (res?.success) {
+      setGeneratedKeys(prev => prev.filter(k => k.id !== keyId));
+    }
+  }, [state.user]);
 
   const activateLicense = useCallback(async (key: string): Promise<boolean> => {
-    await new Promise(resolve => setTimeout(resolve, 600));
-
-    // Validate format: P-XXXX-XXXX-XXXX
     const keyRegex = /^P-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/;
-    if (!keyRegex.test(key.toUpperCase())) {
-      return false;
-    }
+    if (!keyRegex.test(key.toUpperCase())) return false;
 
-    // Check against generated keys
-    const allKeys = loadKeys();
-    const matchedKey = allKeys.find(k => k.key === key.toUpperCase() && k.isActive);
-    if (!matchedKey) {
-      return false;
-    }
+    const res = await callLicenseManager({ action: 'activate', key });
+    if (!res?.success) return false;
 
-    const duration = matchedKey.duration;
-    const now = new Date();
-    let expiresAt: Date | null = null;
-
-    switch (duration) {
-      case '3months': expiresAt = new Date(now.getTime() + 90 * 86400000); break;
-      case '6months': expiresAt = new Date(now.getTime() + 180 * 86400000); break;
-      case '12months': expiresAt = new Date(now.getTime() + 365 * 86400000); break;
-      case 'lifetime': expiresAt = null; break;
-    }
-
-    const license: License = { key, duration, activatedAt: now, expiresAt, isActive: true };
+    const license: License = {
+      key: res.license.key,
+      duration: res.license.duration,
+      activatedAt: new Date(res.license.activatedAt),
+      expiresAt: res.license.expiresAt ? new Date(res.license.expiresAt) : null,
+      isActive: true,
+    };
     localStorage.setItem('midnight_panda_license', JSON.stringify(license));
     setState(prev => ({ ...prev, license }));
     return true;
@@ -202,7 +173,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         ...state,
         login, signup, logout,
         activateLicense, checkLicenseValidity,
-        isAdmin, getGeneratedKeys, generateAndStoreKey, deactivateKey, deleteKey,
+        isAdmin, getGeneratedKeys, refreshGeneratedKeys,
+        generateAndStoreKey, deactivateKey, deleteKey,
       }}
     >
       {children}
@@ -212,8 +184,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
 export function useAuth() {
   const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
+  if (context === undefined) throw new Error('useAuth must be used within an AuthProvider');
   return context;
 }

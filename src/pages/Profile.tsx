@@ -43,9 +43,10 @@ export default function Profile({ onNavigate }: ProfileProps) {
     else { setActivationError('Invalid or inactive license key. Format: P-XXXX-XXXX-XXXX'); }
   };
 
-  const handleGenerateKey = () => {
+  const handleGenerateKey = async () => {
     if (!isValidEmail(genEmail.trim())) { setActivationError('Please enter a valid email'); return; }
-    const newKey = generateAndStoreKey(genEmail.trim(), selectedTier);
+    const newKey = await generateAndStoreKey(genEmail.trim(), selectedTier);
+    if (!newKey) { setActivationError('Failed to generate key. Are you signed in as admin?'); return; }
     setShowGeneratedKey(newKey.id);
     setGenEmail('');
     setActivationError('');
