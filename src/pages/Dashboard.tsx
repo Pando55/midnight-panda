@@ -16,13 +16,27 @@ interface DashboardProps {
 }
 
 export default function Dashboard({ onNavigate }: DashboardProps) {
-  const { user, checkLicenseValidity } = useAuth();
+  const { user, license, checkLicenseValidity } = useAuth();
   const hasValidLicense = checkLicenseValidity();
+  const canPush = hasFeature(license?.duration, 'pushNotifications');
   const { copied, copy } = useCopy();
   const { data: liveMarketData, lastUpdated, refresh: refreshMarkets, isLoading: marketsLoading } = useMarketData();
+  const { permission, request, notify } = useNotifications();
   const [currentTime, setCurrentTime] = useState(new Date());
 
   const [brokerSignal, setBrokerSignal] = useState<TradingSignal | null>(null);
+
+  // Demo: fire a notification when a new active signal appears (lifecycle-safe)
+  useEffect(() => {
+    if (!canPush || permission !== 'granted') return;
+    const active = sampleSignals.find(s => s.status === 'ACTIVE');
+    if (active) {
+      const t = setTimeout(() => {
+        notify(`🎯 ${active.direction} ${active.asset}`, `Entry ${active.entryPrice} · SL ${active.stopLoss} · TP ${active.takeProfit}`);
+      }, 4000);
+      return () => clearTimeout(t);
+    }
+  }, [canPush, permission, notify]);
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
