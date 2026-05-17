@@ -92,7 +92,7 @@ export interface PositionSizeResult {
   units: number;
 }
 
-export type TabName = 'dashboard' | 'analyze' | 'signals' | 'risk-calc' | 'calendar' | 'education' | 'community' | 'leaderboard' | 'chart-analysis' | 'sentiment' | 'profile';
+export type TabName = 'dashboard' | 'analyze' | 'signals' | 'risk-calc' | 'calendar' | 'education' | 'community' | 'leaderboard' | 'chart-analysis' | 'sentiment' | 'ai-assistant' | 'profile';
 
 export interface AuthState {
   user: User | null;
