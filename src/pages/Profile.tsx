@@ -254,3 +254,46 @@ export default function Profile({ onNavigate }: ProfileProps) {
     </div>
   );
 }
+
+function StrategyModeCard() {
+  const { license, checkLicenseValidity } = useAuth();
+  const valid = checkLicenseValidity();
+  const { hasFeature: hf } = require('@/lib/licenseTiers');
+  const allowed = valid && hf(license?.duration, 'strategyMode');
+  const [mode, setMode] = useState<string>(() => localStorage.getItem('mp_strategy_mode') || 'intraday');
+
+  if (!allowed) return null;
+  const options = [
+    { id: 'scalping', label: 'Scalping', desc: 'M1–M5 · fast entries', icon: '⚡' },
+    { id: 'intraday', label: 'Intraday', desc: 'M15–H1 · same-day', icon: '📈' },
+    { id: 'swing', label: 'Swing', desc: 'H4–D · multi-day bias', icon: '🌊' },
+  ];
+
+  return (
+    <div className="glass-card rounded-xl p-5">
+      <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-2">
+        🧠 Strategy Mode
+      </h3>
+      <div className="grid grid-cols-3 gap-2">
+        {options.map(o => (
+          <button
+            key={o.id}
+            onClick={() => { setMode(o.id); localStorage.setItem('mp_strategy_mode', o.id); }}
+            className={cn(
+              'rounded-xl p-3 text-center transition-all border',
+              mode === o.id
+                ? 'border-trading-orange bg-trading-orange/10 text-foreground'
+                : 'border-border text-muted-foreground hover:text-foreground'
+            )}
+          >
+            <div className="text-xl mb-1">{o.icon}</div>
+            <div className="text-xs font-semibold">{o.label}</div>
+            <div className="text-[10px] opacity-70 mt-0.5">{o.desc}</div>
+          </button>
+        ))}
+      </div>
+      <p className="text-[10px] text-muted-foreground mt-3">Signals and AI analysis adapt to your selected style.</p>
+    </div>
+  );
+}
+
