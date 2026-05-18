@@ -73,29 +73,52 @@ export default function Profile({ onNavigate }: ProfileProps) {
 
       <div className="px-4 py-6 space-y-6">
         {/* Profile Card */}
-        <div className="glass-card rounded-xl p-6 text-center">
-          <div className="relative inline-block mb-4">
-            <div className="w-20 h-20 rounded-full bg-gradient-to-br from-trading-orange to-trading-orange-light flex items-center justify-center">
-              <User className="w-10 h-10 text-foreground" />
-            </div>
-            {hasValidLicense && (
-              <div className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-trading-green flex items-center justify-center border-2 border-card">
-                <Check className="w-4 h-4 text-foreground" />
+        {(() => {
+          const isLegend = license?.duration === 'lifetime' && hasValidLicense;
+          return (
+            <div className={cn(
+              'glass-card rounded-xl p-6 text-center',
+              isLegend && 'border-2 border-yellow-500/60 shadow-[0_0_40px_rgba(234,179,8,0.25)] bg-gradient-to-br from-yellow-500/5 to-transparent'
+            )}>
+              <div className="relative inline-block mb-4">
+                <div className={cn(
+                  'w-20 h-20 rounded-full flex items-center justify-center',
+                  isLegend
+                    ? 'bg-gradient-to-br from-yellow-400 via-yellow-500 to-yellow-700 ring-4 ring-yellow-500/30'
+                    : 'bg-gradient-to-br from-trading-orange to-trading-orange-light'
+                )}>
+                  {isLegend
+                    ? <Crown className="w-10 h-10 text-background" />
+                    : <User className="w-10 h-10 text-foreground" />}
+                </div>
+                {hasValidLicense && !isLegend && (
+                  <div className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-trading-green flex items-center justify-center border-2 border-card">
+                    <Check className="w-4 h-4 text-foreground" />
+                  </div>
+                )}
               </div>
-            )}
-          </div>
-          <h2 className="text-xl font-semibold text-foreground">{user?.name || 'Trader'}</h2>
-          <p className="text-sm text-muted-foreground">{user?.email}</p>
-          <div className="mt-4 flex items-center justify-center gap-2">
-            <span className={cn('px-3 py-1 rounded-full text-xs font-semibold border',
-              hasValidLicense ? 'bg-trading-green/20 text-trading-green border-trading-green/30' : 'bg-trading-red/20 text-trading-red border-trading-red/30')}>
-              {hasValidLicense ? 'Premium Active' : 'Free Plan'}
-            </span>
-            {admin && (
-              <span className="px-3 py-1 rounded-full text-xs font-semibold border bg-trading-orange/20 text-trading-orange border-trading-orange/30">Admin</span>
-            )}
-          </div>
-        </div>
+              <h2 className="text-xl font-semibold text-foreground">{user?.name || 'Trader'}</h2>
+              <p className="text-sm text-muted-foreground">{user?.email}</p>
+              <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
+                <span className={cn('px-3 py-1 rounded-full text-xs font-semibold border',
+                  hasValidLicense ? 'bg-trading-green/20 text-trading-green border-trading-green/30' : 'bg-trading-red/20 text-trading-red border-trading-red/30')}>
+                  {hasValidLicense ? 'Premium Active' : 'Free Plan'}
+                </span>
+                {isLegend && (
+                  <span className="px-3 py-1 rounded-full text-xs font-bold border bg-gradient-to-r from-yellow-500/30 to-yellow-700/30 text-yellow-300 border-yellow-500/50 flex items-center gap-1">
+                    <Crown className="w-3 h-3" /> FOUNDERS ACCESS
+                  </span>
+                )}
+                {admin && (
+                  <span className="px-3 py-1 rounded-full text-xs font-semibold border bg-trading-orange/20 text-trading-orange border-trading-orange/30">Admin</span>
+                )}
+              </div>
+            </div>
+          );
+        })()}
+
+        {/* Strategy Mode (Elite+) */}
+        <StrategyModeCard />
 
         {/* License Status */}
         {license && (
