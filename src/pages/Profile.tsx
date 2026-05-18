@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { cn, isValidEmail } from '@/lib/utils';
+import { hasFeature } from '@/lib/licenseTiers';
 import type { LicenseDuration } from '@/types';
 
 interface ProfileProps { onNavigate: (page: 'login' | 'signup' | 'dashboard') => void; }
@@ -258,8 +259,7 @@ export default function Profile({ onNavigate }: ProfileProps) {
 function StrategyModeCard() {
   const { license, checkLicenseValidity } = useAuth();
   const valid = checkLicenseValidity();
-  const { hasFeature: hf } = require('@/lib/licenseTiers');
-  const allowed = valid && hf(license?.duration, 'strategyMode');
+  const allowed = valid && hasFeature(license?.duration, 'strategyMode');
   const [mode, setMode] = useState<string>(() => localStorage.getItem('mp_strategy_mode') || 'intraday');
 
   if (!allowed) return null;
