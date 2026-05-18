@@ -92,7 +92,9 @@ export interface PositionSizeResult {
   units: number;
 }
 
-export type TabName = 'dashboard' | 'analyze' | 'signals' | 'risk-calc' | 'calendar' | 'education' | 'community' | 'leaderboard' | 'chart-analysis' | 'sentiment' | 'ai-assistant' | 'profile';
+export type TabName = 'dashboard' | 'analyze' | 'signals' | 'risk-calc' | 'calendar' | 'education' | 'community' | 'leaderboard' | 'chart-analysis' | 'sentiment' | 'ai-assistant' | 'journal' | 'profile';
+
+export type StrategyMode = 'scalping' | 'intraday' | 'swing';
 
 export interface AuthState {
   user: User | null;

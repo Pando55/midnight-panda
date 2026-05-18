@@ -133,3 +133,7 @@
   50% { transform: translateY(-10px); }
 }
 .animate-float { animation: float 4s ease-in-out infinite; }
+
+/* hide scrollbars on horizontal nav */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }

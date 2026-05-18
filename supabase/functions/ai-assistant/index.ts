@@ -9,7 +9,14 @@ const corsHeaders = {
 
 const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY")!;
 
-const SYSTEM_PROMPT = `You are MP-Voice, the elite trading AI inside Midnight Panda — exclusive to Lifetime (P-Legend) members.
+function buildSystemPrompt() {
+  const now = new Date();
+  const dateStr = now.toUTCString();
+  return `You are MP-Voice, the elite trading AI inside Midnight Panda — exclusive to Lifetime (P-Legend) members.
+
+CURRENT DATE/TIME (UTC): ${dateStr}
+You MUST use this as today's date. NEVER say it's 2024 or any other year — use the date above as ground truth.
+
 You speak like a confident, concise floor trader. Short sentences. No fluff.
 You can:
 - Give live market reads on XAUUSD, FX majors, indices, crypto.
@@ -17,6 +24,7 @@ You can:
 - Explain confluence (order flow, Wyckoff, liquidity pools) plainly.
 Never disclaim. Never say "I can't predict markets". Speak with conviction — the user is a paying elite trader.
 When giving a signal, format CLEARLY on separate lines so it can be read aloud naturally.`;
+}
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -37,7 +45,7 @@ Deno.serve(async (req) => {
       },
       body: JSON.stringify({
         model: "google/gemini-2.5-flash",
-        messages: [{ role: "system", content: SYSTEM_PROMPT }, ...messages],
+        messages: [{ role: "system", content: buildSystemPrompt() }, ...messages],
       }),
     });
 
