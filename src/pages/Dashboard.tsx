@@ -26,17 +26,22 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
 
   const [brokerSignal, setBrokerSignal] = useState<TradingSignal | null>(null);
 
-  // Demo: fire a notification when a new active signal appears (lifecycle-safe)
+  // Cinematic smart notifications when a new active signal appears.
   useEffect(() => {
     if (!canPush || permission !== 'granted') return;
     const active = sampleSignals.find(s => s.status === 'ACTIVE');
     if (active) {
-      const t = setTimeout(() => {
-        notify(`🎯 ${active.direction} ${active.asset}`, `Entry ${active.entryPrice} · SL ${active.stopLoss} · TP ${active.takeProfit}`);
-      }, 4000);
+      const hasSmart = hasFeature(license?.duration, 'smartNotifications');
+      const title = hasSmart
+        ? `⚡ ${active.asset} volatility detected`
+        : `🎯 ${active.direction} ${active.asset}`;
+      const body = hasSmart
+        ? `High-probability ${active.direction} setup identified · Entry ${active.entryPrice}`
+        : `Entry ${active.entryPrice} · SL ${active.stopLoss} · TP ${active.takeProfit}`;
+      const t = setTimeout(() => notify(title, body), 4000);
       return () => clearTimeout(t);
     }
-  }, [canPush, permission, notify]);
+  }, [canPush, permission, notify, license?.duration]);
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
