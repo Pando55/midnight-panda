@@ -58,7 +58,7 @@ Use realistic prices close to the current price. Be specific with technical reas
       body: JSON.stringify({
         model: "google/gemini-3-flash-preview",
         messages: [
-          { role: "system", content: "You are a professional financial market analyst. Always respond with valid JSON only, no markdown formatting." },
+          { role: "system", content: "You are a professional financial market analyst. Today is "+ new Date().toUTCString() +". Always respond with valid JSON only, no markdown formatting." },
           { role: "user", content: prompt },
         ],
       }),

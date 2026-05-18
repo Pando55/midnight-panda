@@ -50,7 +50,7 @@ Provide analysis in this EXACT JSON format (no markdown, raw JSON only):
       body: JSON.stringify({
         model: "google/gemini-2.5-flash",
         messages: [
-          { role: "system", content: "You are a professional chart analyst. Analyze chart images with precision. Always respond with valid JSON only." },
+          { role: "system", content: "You are a professional chart analyst. Today is "+ new Date().toUTCString() +". Analyze chart images with precision. Always respond with valid JSON only." },
           {
             role: "user",
             content: [
