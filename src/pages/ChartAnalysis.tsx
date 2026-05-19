@@ -101,8 +101,9 @@ export default function ChartAnalysis({ onNavigate }: ChartAnalysisProps) {
       const imageBase64 = await fileToBase64(selectedFile);
       const mimeType = selectedFile.type || 'image/jpeg';
 
+      const strategy = (typeof window !== 'undefined' && localStorage.getItem('mp_strategy')) || 'intraday';
       const { data, error: fnError } = await supabase.functions.invoke('analyze-chart', {
-        body: { imageBase64, mimeType, pair, timeframe, notes },
+        body: { imageBase64, mimeType, pair, timeframe, notes, currentPrice, strategy },
       });
 
       if (fnError) throw new Error(fnError.message || 'Analysis failed');
