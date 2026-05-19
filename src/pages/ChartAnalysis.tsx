@@ -235,6 +235,19 @@ export default function ChartAnalysis({ onNavigate }: ChartAnalysisProps) {
               </div>
             </div>
             <div>
+              <label className="text-xs text-muted-foreground mb-1 block">
+                Current Market Price <span className="text-primary">(recommended for accuracy)</span>
+              </label>
+              <Input
+                placeholder="e.g. 2658.40"
+                value={currentPrice}
+                onChange={e => setCurrentPrice(e.target.value)}
+                inputMode="decimal"
+                className="bg-card border-border text-sm"
+              />
+              <p className="text-[10px] text-muted-foreground mt-1">Grounds the AI so Entry/SL/TP aren't guessed.</p>
+            </div>
+            <div>
               <label className="text-xs text-muted-foreground mb-1 block">Notes (optional)</label>
               <Textarea
                 placeholder="Any context about your setup..."
