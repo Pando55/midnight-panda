@@ -297,7 +297,41 @@ export default function ChartAnalysis({ onNavigate }: ChartAnalysisProps) {
                 </span>
               </div>
               <p className="text-sm text-muted-foreground">{analysis.summary}</p>
+              {analysis.reliability && (
+                <div className="mt-2 flex items-center gap-2">
+                  <span className={cn('text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded',
+                    analysis.reliability === 'HIGH' ? 'bg-[hsl(var(--trading-green))]/20 text-[hsl(var(--trading-green))]' :
+                    analysis.reliability === 'MEDIUM' ? 'bg-yellow-500/20 text-yellow-400' :
+                    'bg-destructive/20 text-destructive')}>
+                    {analysis.reliability} reliability
+                  </span>
+                  <span className="text-[10px] text-muted-foreground">Strategy: {(localStorage.getItem('mp_strategy') || 'intraday').toUpperCase()}</span>
+                </div>
+              )}
             </div>
+
+            {analysis.reasoning && (
+              <div className="glass-card rounded-xl p-4 space-y-2">
+                <p className="text-xs text-muted-foreground uppercase font-semibold mb-1">AI Reasoning Chain</p>
+                {analysis.reasoning.trend && (
+                  <div><span className="text-[10px] text-primary font-bold uppercase">1. Trend</span><p className="text-xs text-foreground">{analysis.reasoning.trend}</p></div>
+                )}
+                {analysis.reasoning.keyLevels && (
+                  <div><span className="text-[10px] text-primary font-bold uppercase">2. Key Levels</span><p className="text-xs text-foreground">{analysis.reasoning.keyLevels}</p></div>
+                )}
+                {analysis.reasoning.indicators && (
+                  <div><span className="text-[10px] text-primary font-bold uppercase">3. Indicators</span><p className="text-xs text-foreground">{analysis.reasoning.indicators}</p></div>
+                )}
+                {analysis.reasoning.confluences && analysis.reasoning.confluences.length > 0 && (
+                  <div>
+                    <span className="text-[10px] text-primary font-bold uppercase">4. Confluences ({analysis.reasoning.confluences.length})</span>
+                    <ul className="text-xs text-foreground list-disc list-inside">
+                      {analysis.reasoning.confluences.map((c, i) => <li key={i}>{c}</li>)}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            )}
 
             {analysis.patterns.length > 0 && (
               <div className="glass-card rounded-xl p-4">
