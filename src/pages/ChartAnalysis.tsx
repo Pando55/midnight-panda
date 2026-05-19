@@ -47,6 +47,7 @@ export default function ChartAnalysis({ onNavigate }: ChartAnalysisProps) {
   const [preview, setPreview] = useState<string | null>(null);
   const [pair, setPair] = useState('');
   const [timeframe, setTimeframe] = useState('');
+  const [currentPrice, setCurrentPrice] = useState('');
   const [notes, setNotes] = useState('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysis, setAnalysis] = useState<ChartAIAnalysis | null>(null);
