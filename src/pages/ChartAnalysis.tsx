@@ -16,6 +16,13 @@ interface ChartAIAnalysis {
   timeframe: string;
   sentiment: string;
   confidence: number;
+  reliability?: 'HIGH' | 'MEDIUM' | 'LOW';
+  reasoning?: {
+    trend?: string;
+    keyLevels?: string;
+    indicators?: string;
+    confluences?: string[];
+  };
   summary: string;
   patterns: string[];
   entry: { price: string; reason: string };
