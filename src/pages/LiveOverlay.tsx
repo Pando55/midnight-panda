@@ -7,7 +7,20 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
-import { ScanLine, Play, Square, Loader2, TrendingUp, TrendingDown, Eye, AlertTriangle } from 'lucide-react';
+import { ScanLine, Play, Square, Loader2, TrendingUp, TrendingDown, Eye, AlertTriangle, Smartphone, Monitor } from 'lucide-react';
+
+type Device = 'ios' | 'android' | 'desktop';
+function detectDevice(): Device {
+  const ua = navigator.userAgent || '';
+  if (/iPhone|iPad|iPod/i.test(ua)) return 'ios';
+  if (/Android/i.test(ua)) return 'android';
+  return 'desktop';
+}
+const supportsCapture = () =>
+  typeof navigator !== 'undefined' &&
+  !!navigator.mediaDevices &&
+  // @ts-ignore
+  typeof navigator.mediaDevices.getDisplayMedia === 'function';
 
 type Sentiment = 'BULLISH' | 'BEARISH' | 'NEUTRAL';
 type Reliability = 'HIGH' | 'MEDIUM' | 'LOW';
