@@ -50,6 +50,8 @@ export default function LiveOverlay() {
   const [pair, setPair] = useState('XAUUSD');
   const [timeframe, setTimeframe] = useState('M15');
   const [intervalSec, setIntervalSec] = useState(20);
+  const [device] = useState<Device>(() => detectDevice());
+  const [canCapture] = useState<boolean>(() => supportsCapture());
   const strategy = (localStorage.getItem('mp_strategy') || 'intraday') as string;
 
   const stop = () => {
