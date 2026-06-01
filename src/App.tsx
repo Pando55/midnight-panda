@@ -11,6 +11,7 @@ import Education from '@/pages/Education';
 import Community from '@/pages/Community';
 import Leaderboard from '@/pages/Leaderboard';
 import ChartAnalysis from '@/pages/ChartAnalysis';
+import LiveOverlay from '@/pages/LiveOverlay';
 import Sentiment from '@/pages/Sentiment';
 import Profile from '@/pages/Profile';
 import AIAssistant from '@/pages/AIAssistant';
@@ -23,7 +24,7 @@ import { Loader2 } from 'lucide-react';
 import type { TabName } from '@/types';
 
 // All tabs except Dashboard & Profile are license-gated to drive activations.
-const GATED_TABS: TabName[] = ['analyze', 'signals', 'risk-calc', 'calendar', 'education', 'community', 'leaderboard', 'chart-analysis', 'sentiment', 'ai-assistant', 'journal'];
+const GATED_TABS: TabName[] = ['analyze', 'signals', 'risk-calc', 'calendar', 'education', 'community', 'leaderboard', 'chart-analysis', 'live-overlay', 'sentiment', 'ai-assistant', 'journal'];
 
 function App() {
   return (
@@ -85,6 +86,7 @@ function AppContent() {
         {activeTab === 'community' && gated(<Community />, 'Community Chat')}
         {activeTab === 'leaderboard' && gated(<Leaderboard />, 'Leaderboard')}
         {activeTab === 'chart-analysis' && gated(<ChartAnalysis onNavigate={(tab: string) => setActiveTab(tab as TabName)} />, 'AI Chart Scanner')}
+        {activeTab === 'live-overlay' && gated(<LiveOverlay />, 'AI Live Overlay')}
         {activeTab === 'risk-calc' && gated(<RiskCalculator />, 'Risk Calculator')}
         {activeTab === 'sentiment' && gated(<Sentiment />, 'Market Sentiment')}
         {activeTab === 'ai-assistant' && gated(<AIAssistant />, 'MP-Voice AI')}

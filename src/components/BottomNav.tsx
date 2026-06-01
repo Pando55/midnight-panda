@@ -1,4 +1,4 @@
-import { LayoutDashboard, Zap, User, GraduationCap, Camera, Calendar, Sparkles, BookOpen } from 'lucide-react';
+import { LayoutDashboard, Zap, User, GraduationCap, Camera, Calendar, Sparkles, BookOpen, Eye } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { TabName } from '@/types';
 
@@ -11,6 +11,7 @@ const tabs: { id: TabName; label: string; icon: typeof LayoutDashboard }[] = [
   { id: 'dashboard', label: 'Home', icon: LayoutDashboard },
   { id: 'signals', label: 'Signals', icon: Zap },
   { id: 'chart-analysis', label: 'Charts', icon: Camera },
+  { id: 'live-overlay', label: 'Overlay', icon: Eye },
   { id: 'ai-assistant', label: 'AI', icon: Sparkles },
   { id: 'journal', label: 'Journal', icon: BookOpen },
   { id: 'calendar', label: 'Calendar', icon: Calendar },
