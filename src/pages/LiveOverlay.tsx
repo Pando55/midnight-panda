@@ -238,8 +238,13 @@ export default function LiveOverlay() {
         </div>
 
         {!isStreaming ? (
-          <Button onClick={start} className="w-full bg-trading-orange hover:bg-trading-orange/90">
-            <Play className="w-4 h-4 mr-2" /> Start Overlay (Share Chart)
+          <Button
+            onClick={start}
+            disabled={device === 'ios' || !canCapture}
+            className="w-full bg-trading-orange hover:bg-trading-orange/90 disabled:opacity-50"
+          >
+            <Play className="w-4 h-4 mr-2" />
+            {device === 'ios' ? 'Not supported on iPhone' : 'Start Overlay (Share Chart)'}
           </Button>
         ) : (
           <div className="flex gap-2">
