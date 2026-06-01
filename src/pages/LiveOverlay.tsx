@@ -7,7 +7,20 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
-import { ScanLine, Play, Square, Loader2, TrendingUp, TrendingDown, Eye, AlertTriangle } from 'lucide-react';
+import { ScanLine, Play, Square, Loader2, TrendingUp, TrendingDown, Eye, AlertTriangle, Smartphone, Monitor } from 'lucide-react';
+
+type Device = 'ios' | 'android' | 'desktop';
+function detectDevice(): Device {
+  const ua = navigator.userAgent || '';
+  if (/iPhone|iPad|iPod/i.test(ua)) return 'ios';
+  if (/Android/i.test(ua)) return 'android';
+  return 'desktop';
+}
+const supportsCapture = () =>
+  typeof navigator !== 'undefined' &&
+  !!navigator.mediaDevices &&
+  // @ts-ignore
+  typeof navigator.mediaDevices.getDisplayMedia === 'function';
 
 type Sentiment = 'BULLISH' | 'BEARISH' | 'NEUTRAL';
 type Reliability = 'HIGH' | 'MEDIUM' | 'LOW';
@@ -37,6 +50,8 @@ export default function LiveOverlay() {
   const [pair, setPair] = useState('XAUUSD');
   const [timeframe, setTimeframe] = useState('M15');
   const [intervalSec, setIntervalSec] = useState(20);
+  const [device] = useState<Device>(() => detectDevice());
+  const [canCapture] = useState<boolean>(() => supportsCapture());
   const strategy = (localStorage.getItem('mp_strategy') || 'intraday') as string;
 
   const stop = () => {
@@ -136,13 +151,65 @@ export default function LiveOverlay() {
 
   return (
     <div className="min-h-screen bg-background p-4 space-y-4">
-      <div className="flex items-center gap-2">
-        <Eye className="w-6 h-6 text-trading-orange" />
-        <h1 className="text-2xl font-bold">AI Live Overlay</h1>
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <Eye className="w-6 h-6 text-trading-orange" />
+          <h1 className="text-2xl font-bold">AI Live Overlay</h1>
+        </div>
+        {isStreaming && (
+          <Badge className="bg-trading-green text-white animate-pulse">
+            <span className="inline-block w-2 h-2 rounded-full bg-white mr-1.5" /> AI Watching
+          </Badge>
+        )}
       </div>
       <p className="text-sm text-muted-foreground -mt-2">
-        Share your chart window (MT4/MT5, TradingView, broker app) and the AI reads price action in real time.
+        Share your chart window (MT4/MT5 desktop, TradingView tab) and the AI reads price action in real time.
       </p>
+
+      {device === 'ios' && (
+        <Card className="p-3 border-trading-red/40 bg-trading-red/10">
+          <div className="flex items-start gap-2">
+            <Smartphone className="w-4 h-4 text-trading-red mt-0.5 shrink-0" />
+            <div className="text-xs">
+              <p className="font-semibold text-trading-red">iPhone / iPad can't run Live Overlay</p>
+              <p className="text-foreground/80 mt-1">
+                Safari blocks screen capture system-wide (Apple's restriction). Use <b>AI Chart Scanner</b> instead — screenshot your MT5 chart, upload, get a signal in 5 seconds.
+              </p>
+            </div>
+          </div>
+        </Card>
+      )}
+
+      {device === 'android' && canCapture && (
+        <Card className="p-3 border-yellow-500/40 bg-yellow-500/10">
+          <div className="flex items-start gap-2">
+            <AlertTriangle className="w-4 h-4 text-yellow-400 mt-0.5 shrink-0" />
+            <div className="text-xs text-foreground/90">
+              <p className="font-semibold text-yellow-400">Android tip</p>
+              <p className="mt-1">
+                Pick <b>"Share entire screen"</b> when prompted, then open MT5/TradingView. Chrome must stay alive in the background — use <b>split-screen mode</b> for best results, or Live Overlay will pause when Android backgrounds the browser.
+              </p>
+            </div>
+          </div>
+        </Card>
+      )}
+
+      {device === 'desktop' && (
+        <Card className="p-3 border-trading-green/40 bg-trading-green/10">
+          <div className="flex items-start gap-2">
+            <Monitor className="w-4 h-4 text-trading-green mt-0.5 shrink-0" />
+            <div className="text-xs text-foreground/90">
+              Desktop = full power. Pick your <b>MT5 window</b> or <b>TradingView tab</b> when prompted.
+            </div>
+          </div>
+        </Card>
+      )}
+
+      {!canCapture && device !== 'ios' && (
+        <Card className="p-3 border-trading-red/40 bg-trading-red/10 text-xs text-trading-red">
+          Your browser doesn't expose screen capture. Try Chrome or Edge.
+        </Card>
+      )}
 
       <Card className="p-4 space-y-3">
         <div className="grid grid-cols-2 gap-3">
@@ -171,8 +238,13 @@ export default function LiveOverlay() {
         </div>
 
         {!isStreaming ? (
-          <Button onClick={start} className="w-full bg-trading-orange hover:bg-trading-orange/90">
-            <Play className="w-4 h-4 mr-2" /> Start Overlay (Share Chart)
+          <Button
+            onClick={start}
+            disabled={device === 'ios' || !canCapture}
+            className="w-full bg-trading-orange hover:bg-trading-orange/90 disabled:opacity-50"
+          >
+            <Play className="w-4 h-4 mr-2" />
+            {device === 'ios' ? 'Not supported on iPhone' : 'Start Overlay (Share Chart)'}
           </Button>
         ) : (
           <div className="flex gap-2">
