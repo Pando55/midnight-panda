@@ -388,40 +388,44 @@ export default function ChartAnalysis({ onNavigate }: ChartAnalysisProps) {
               </div>
             )}
 
-            <div className="space-y-2">
-              <div className="p-3 rounded-lg bg-primary/5 border border-primary/20">
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs text-muted-foreground uppercase font-semibold flex items-center gap-1">
-                    <Target className="w-3 h-3" /> Entry
-                  </span>
-                  <span className="text-lg font-mono font-bold text-primary">{analysis.entry.price}</span>
+            {analysis.signal_action !== 'NO_TRADE' && (
+              <>
+                <div className="space-y-2">
+                  <div className="p-3 rounded-lg bg-primary/5 border border-primary/20">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-xs text-muted-foreground uppercase font-semibold flex items-center gap-1">
+                        <Target className="w-3 h-3" /> Entry
+                      </span>
+                      <span className="text-lg font-mono font-bold text-primary">{analysis.entry.price}</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground">{analysis.entry.reason}</p>
+                  </div>
+                  <div className="p-3 rounded-lg bg-destructive/5 border border-destructive/20">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-xs text-muted-foreground uppercase font-semibold flex items-center gap-1">
+                        <Shield className="w-3 h-3" /> Stop Loss
+                      </span>
+                      <span className="text-lg font-mono font-bold text-destructive">{analysis.stopLoss.price}</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground">{analysis.stopLoss.reason}</p>
+                  </div>
+                  <div className="p-3 rounded-lg bg-[hsl(var(--trading-green))]/5 border border-[hsl(var(--trading-green))]/20">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-xs text-muted-foreground uppercase font-semibold flex items-center gap-1">
+                        <TrendingUp className="w-3 h-3" /> Take Profit
+                      </span>
+                      <span className="text-lg font-mono font-bold text-[hsl(var(--trading-green))]">{analysis.takeProfit.price}</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground">{analysis.takeProfit.reason}</p>
+                  </div>
                 </div>
-                <p className="text-xs text-muted-foreground">{analysis.entry.reason}</p>
-              </div>
-              <div className="p-3 rounded-lg bg-destructive/5 border border-destructive/20">
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs text-muted-foreground uppercase font-semibold flex items-center gap-1">
-                    <Shield className="w-3 h-3" /> Stop Loss
-                  </span>
-                  <span className="text-lg font-mono font-bold text-destructive">{analysis.stopLoss.price}</span>
-                </div>
-                <p className="text-xs text-muted-foreground">{analysis.stopLoss.reason}</p>
-              </div>
-              <div className="p-3 rounded-lg bg-[hsl(var(--trading-green))]/5 border border-[hsl(var(--trading-green))]/20">
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs text-muted-foreground uppercase font-semibold flex items-center gap-1">
-                    <TrendingUp className="w-3 h-3" /> Take Profit
-                  </span>
-                  <span className="text-lg font-mono font-bold text-[hsl(var(--trading-green))]">{analysis.takeProfit.price}</span>
-                </div>
-                <p className="text-xs text-muted-foreground">{analysis.takeProfit.reason}</p>
-              </div>
-            </div>
 
-            <div className="glass-card rounded-xl p-4 text-center">
-              <p className="text-xs text-muted-foreground mb-1">Risk : Reward</p>
-              <p className="text-2xl font-bold text-foreground">{analysis.riskReward}</p>
-            </div>
+                <div className="glass-card rounded-xl p-4 text-center">
+                  <p className="text-xs text-muted-foreground mb-1">Risk : Reward</p>
+                  <p className="text-2xl font-bold text-foreground">{analysis.riskReward}</p>
+                </div>
+              </>
+            )}
 
             {analysis.keyLevels.length > 0 && (
               <div className="glass-card rounded-xl p-4">
