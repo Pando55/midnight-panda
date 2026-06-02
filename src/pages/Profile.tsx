@@ -149,6 +149,10 @@ export default function Profile({ onNavigate }: ProfileProps) {
           </div>
         )}
 
+        {/* Telegram MT5 bridge */}
+        <TelegramBridgeCard />
+
+
         {/* License Activation (for all users) */}
         {!hasValidLicense && (
           <div className="glass-card rounded-xl p-5 space-y-5">
