@@ -310,11 +310,7 @@ function TelegramBridgeCard() {
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState('');
 
-  // lazy import to avoid top-level cycles
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const { supabase } = require('@/integrations/supabase/client') as typeof import('@/integrations/supabase/client');
-
-  useState(() => {
+  useEffect(() => {
     if (!user) { setLoading(false); return; }
     (supabase.from('profiles') as any)
       .select('telegram_chat_id')
@@ -324,7 +320,7 @@ function TelegramBridgeCard() {
         if (data?.telegram_chat_id) setChatId(data.telegram_chat_id);
         setLoading(false);
       });
-  });
+  }, [user]);
 
   const save = async () => {
     if (!user) return;
