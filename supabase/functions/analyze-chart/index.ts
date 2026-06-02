@@ -6,10 +6,10 @@ const corsHeaders = {
 };
 
 const STRATEGY_PROMPTS: Record<string, string> = {
-  scalping: `You are a SCALPER. Focus on 1m-15m structure: liquidity sweeps, micro order blocks, fair value gaps, session opens (London/NY). Target 5-20 pip moves with tight 1:1.5 to 1:3 RR. Be decisive on short-term momentum.`,
-  intraday: `You are an INTRADAY trader. Focus on H1-H4 structure: daily/weekly highs & lows, key supply/demand zones, session bias, news catalysts. Target 30-100 pip moves with 1:2 to 1:4 RR.`,
-  swing: `You are a SWING trader. Focus on H4-D1-W1 structure: Wyckoff phases, accumulation/distribution, weekly imbalance, macro narrative. Target 150-500 pip moves with 1:3 to 1:6 RR.`,
-  smc: `You are a Smart Money Concepts (SMC) analyst. Identify BOS/CHoCH, order blocks, fair value gaps, liquidity grabs, premium/discount zones. Entries must be at refined POIs after a liquidity sweep.`,
+  scalping: `You are a SCALPER on 1m-15m. Trade only with HTF bias + LTF liquidity sweep + clear order block reaction. Target 1:1.5 to 1:3 RR. SL must sit beyond the sweep wick, not at obvious round numbers.`,
+  intraday: `You are an INTRADAY trader on H1-H4. Need confirmed BOS in trade direction, retest of OB/FVG/key zone, and session alignment (London/NY). Target 1:2 to 1:4 RR.`,
+  swing: `You are a SWING trader on H4-D1-W1. Need Wyckoff phase context, weekly imbalance, or D1 BOS with H4 retest. Target 1:3 to 1:6 RR.`,
+  smc: `You are an SMC analyst. Require: (1) liquidity sweep of recent equal highs/lows, (2) CHoCH or BOS on the entry timeframe, (3) entry from a refined OB/FVG in premium (for sells) or discount (for buys).`,
 };
 
 serve(async (req) => {
@@ -20,7 +20,6 @@ serve(async (req) => {
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
     const { imageBase64, mimeType, pair, timeframe, notes, currentPrice, strategy } = await req.json();
-
     if (!imageBase64) throw new Error("No chart image provided");
 
     const strategyKey = (strategy || "intraday").toLowerCase();
@@ -29,51 +28,72 @@ serve(async (req) => {
     const systemPrompt = `You are a senior institutional chart analyst for Midnight Panda. Today: ${new Date().toUTCString()}.
 ${strategyDirective}
 
-You MUST follow a strict Chain-of-Thought before producing the signal:
-STEP 1 — TREND: Identify primary trend (HTF bias) and secondary trend (LTF pullback/continuation).
-STEP 2 — KEY LEVELS: Map the nearest major support & resistance, supply/demand zones, swing highs/lows, and any unfilled liquidity pools.
-STEP 3 — INDICATORS / PRICE ACTION: Read any visible RSI, MACD, MAs, volume. Note candle structure, rejection wicks, engulfings, BOS/CHoCH.
-STEP 4 — CONFLUENCE CHECK: Count confluences (trend + level + indicator + structure + session). 4+ confluences = high confidence. <3 = low.
-STEP 5 — SIGNAL: Only now produce Entry, SL, TP with EXACT prices grounded in the provided current price.
+CRITICAL — YOUR #1 JOB IS TO PROTECT THE TRADER'S CAPITAL. It is FAR better to return NO_TRADE than to force a bad signal. Yesterday a forced signal hit SL in 2 minutes — never again.
+
+MARKET STRUCTURE GATE (mandatory):
+Before producing ANY signal you MUST identify on the chart:
+1. Swing sequence: are we making HH/HL (uptrend), LH/LL (downtrend), or ranging? Name the last 2 swing points.
+2. Last structural event: BOS (break of structure) or CHoCH (change of character) — direction and approximate price.
+3. Current location: are we in premium, discount, or equilibrium of the last leg?
+4. Liquidity: where is the obvious resting liquidity (equal highs/lows, prior session high/low)?
+
+NO-TRADE RULES — return sentiment "NEUTRAL" and signal_action "NO_TRADE" if ANY of these are true:
+- Price is mid-range with no clear BOS/CHoCH.
+- Structure is choppy / overlapping candles / no clean swings.
+- Price is sitting directly into major resistance for a BUY or major support for a SELL (chasing).
+- You cannot clearly read price from the chart.
+- Less than 3 real confluences.
+- High-impact news visibly imminent (if shown).
+- RR would be worse than 1:1.5.
 
 CONFIDENCE RULES:
-- 85-95: 4+ confluences, clean structure, clear bias.
-- 70-84: 3 confluences, some ambiguity.
-- Below 70: Mark as LOW RELIABILITY and set sentiment to NEUTRAL with a warning telling the user to skip this setup.
+- 85-95 = 4+ confluences, fresh BOS, clean retest, RR ≥ 1:2.5.
+- 70-84 = 3 confluences, decent structure.
+- < 70 = MUST become NO_TRADE.
 
-PRICE GROUNDING: Use the provided "Current Market Price" as the anchor for Entry/SL/TP. Do NOT invent price levels far from it. SL and TP must be realistic pip distances for the timeframe.
+PRICE GROUNDING: Anchor Entry/SL/TP to the provided Current Market Price. SL must sit beyond the invalidation swing (not a random number). TP must sit before the next opposing liquidity pool, not through it.
 
-Respond with valid JSON only, no markdown.`;
+Output JSON only. No markdown. No prose outside JSON.`;
 
-    const userPrompt = `Analyze this chart.
+    const userPrompt = `Analyze this chart with extreme discipline.
 
 Pair: ${pair || "(identify from chart)"}
 Timeframe: ${timeframe || "(identify from chart)"}
-Current Market Price: ${currentPrice || "(estimate from latest candle on chart)"}
+Current Market Price: ${currentPrice || "(read from latest candle)"}
 Strategy Mode: ${strategyKey.toUpperCase()}
 Trader notes: ${notes || "none"}
 
-Walk through Steps 1-5 internally, then output ONLY this JSON:
+Walk through the Market Structure Gate, then output ONLY this JSON:
 {
   "asset": "string",
   "timeframe": "string",
+  "signal_action": "TRADE" | "NO_TRADE",
+  "no_trade_reason": "if NO_TRADE, plain-English reason the trader can learn from",
   "sentiment": "BULLISH" | "BEARISH" | "NEUTRAL",
-  "confidence": number (0-100),
+  "confidence": number,
   "reliability": "HIGH" | "MEDIUM" | "LOW",
-  "reasoning": {
-    "trend": "primary + secondary trend",
-    "keyLevels": "nearest S/R, zones, liquidity",
-    "indicators": "RSI/MACD/MA/structure readings",
-    "confluences": ["confluence 1", "confluence 2", "..."]
+  "structure": {
+    "trend": "uptrend HH/HL | downtrend LH/LL | range",
+    "lastSwingHigh": "price",
+    "lastSwingLow": "price",
+    "lastEvent": "BOS bullish at X | CHoCH bearish at Y | none",
+    "location": "premium | discount | equilibrium",
+    "liquidityPools": ["equal highs at X", "Asia low at Y"]
   },
-  "summary": "2-3 sentence verdict",
+  "reasoning": {
+    "trend": "primary + secondary",
+    "keyLevels": "nearest S/R, zones",
+    "indicators": "RSI/MACD/MA/structure readings",
+    "confluences": ["c1", "c2", "c3"]
+  },
+  "summary": "2-3 sentence verdict (or why NO_TRADE)",
   "patterns": ["pattern names"],
-  "entry": { "price": "exact price string", "reason": "why here" },
-  "stopLoss": { "price": "exact price string", "reason": "why here" },
-  "takeProfit": { "price": "exact price string", "reason": "why here" },
-  "riskReward": "1:X.X",
+  "entry": { "price": "exact price or N/A", "reason": "why here, or N/A if NO_TRADE" },
+  "stopLoss": { "price": "exact price or N/A", "reason": "invalidation swing reference" },
+  "takeProfit": { "price": "exact price or N/A", "reason": "target liquidity reference" },
+  "riskReward": "1:X.X or N/A",
   "keyLevels": ["price1", "price2"],
-  "indicators": ["RSI 62 bullish", "MACD cross up"],
+  "indicators": ["RSI 62 bullish"],
   "warning": "risk note OR low-reliability warning"
 }`;
 
@@ -119,7 +139,7 @@ Walk through Steps 1-5 internally, then output ONLY this JSON:
     const data = await response.json();
     const content = data.choices?.[0]?.message?.content || "";
 
-    let analysis;
+    let analysis: any;
     try {
       const jsonStr = content.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
       analysis = JSON.parse(jsonStr);
@@ -130,12 +150,19 @@ Walk through Steps 1-5 internally, then output ONLY this JSON:
       });
     }
 
-    // Server-side confidence guard
-    if (typeof analysis.confidence === "number" && analysis.confidence < 70) {
+    // Server-side discipline guard
+    const conf = typeof analysis.confidence === "number" ? analysis.confidence : 0;
+    if (conf < 70 || analysis.signal_action === "NO_TRADE") {
+      analysis.signal_action = "NO_TRADE";
+      analysis.sentiment = "NEUTRAL";
       analysis.reliability = "LOW";
-      analysis.warning = `⚠️ LOW RELIABILITY (${analysis.confidence}%). ${analysis.warning || "Skip this setup — wait for cleaner structure."}`;
+      analysis.warning = `🛑 NO-TRADE SIGNAL. ${analysis.no_trade_reason || analysis.warning || "Structure unclear — wait for a clean BOS + retest."}`;
+      analysis.entry = { price: "N/A", reason: "No trade" };
+      analysis.stopLoss = { price: "N/A", reason: "No trade" };
+      analysis.takeProfit = { price: "N/A", reason: "No trade" };
+      analysis.riskReward = "N/A";
     } else if (!analysis.reliability) {
-      analysis.reliability = analysis.confidence >= 85 ? "HIGH" : "MEDIUM";
+      analysis.reliability = conf >= 85 ? "HIGH" : "MEDIUM";
     }
 
     return new Response(JSON.stringify({ analysis }), {
