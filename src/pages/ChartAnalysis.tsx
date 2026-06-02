@@ -64,6 +64,40 @@ export default function ChartAnalysis({ onNavigate }: ChartAnalysisProps) {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysis, setAnalysis] = useState<ChartAIAnalysis | null>(null);
   const [error, setError] = useState('');
+  const [tgOpen, setTgOpen] = useState(false);
+  const [tgLot, setTgLot] = useState('0.01');
+  const [tgSending, setTgSending] = useState(false);
+  const [tgMsg, setTgMsg] = useState('');
+
+  const sendToTelegram = async () => {
+    if (!analysis) return;
+    setTgSending(true); setTgMsg('');
+    const symbol = (pair || analysis.asset || '').replace(/[\s/]/g, '').toUpperCase();
+    const direction = analysis.sentiment === 'BULLISH' ? 'BUY' : analysis.sentiment === 'BEARISH' ? 'SELL' : '';
+    if (!direction) { setTgMsg('No directional signal — skipped.'); setTgSending(false); return; }
+    try {
+      const { data, error } = await supabase.functions.invoke('send-to-telegram', {
+        body: {
+          symbol,
+          direction,
+          lotSize: tgLot,
+          entry: analysis.entry.price,
+          stopLoss: analysis.stopLoss.price,
+          takeProfit: analysis.takeProfit.price,
+          riskReward: analysis.riskReward,
+          reason: analysis.summary,
+        },
+      });
+      if (error) throw new Error(error.message);
+      if (data?.error) throw new Error(data.error);
+      setTgMsg('✅ Sent to your Telegram channel!');
+      setTimeout(() => setTgOpen(false), 1200);
+    } catch (e) {
+      setTgMsg(e instanceof Error ? e.message : 'Send failed');
+    } finally {
+      setTgSending(false);
+    }
+  };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
