@@ -14,9 +14,19 @@ interface ChartAnalysisProps {
 interface ChartAIAnalysis {
   asset: string;
   timeframe: string;
+  signal_action?: 'TRADE' | 'NO_TRADE';
+  no_trade_reason?: string;
   sentiment: string;
   confidence: number;
   reliability?: 'HIGH' | 'MEDIUM' | 'LOW';
+  structure?: {
+    trend?: string;
+    lastSwingHigh?: string;
+    lastSwingLow?: string;
+    lastEvent?: string;
+    location?: string;
+    liquidityPools?: string[];
+  };
   reasoning?: {
     trend?: string;
     keyLevels?: string;
