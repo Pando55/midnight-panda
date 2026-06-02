@@ -301,3 +301,70 @@ function StrategyModeCard() {
   );
 }
 
+function TelegramBridgeCard() {
+  const { user } = useAuth();
+  const [chatId, setChatId] = useState('');
+  const [saved, setSaved] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [err, setErr] = useState('');
+
+  // lazy import to avoid top-level cycles
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const { supabase } = require('@/integrations/supabase/client') as typeof import('@/integrations/supabase/client');
+
+  useState(() => {
+    if (!user) { setLoading(false); return; }
+    (supabase.from('profiles') as any)
+      .select('telegram_chat_id')
+      .eq('user_id', user.id)
+      .maybeSingle()
+      .then(({ data }: any) => {
+        if (data?.telegram_chat_id) setChatId(data.telegram_chat_id);
+        setLoading(false);
+      });
+  });
+
+  const save = async () => {
+    if (!user) return;
+    setSaving(true); setErr('');
+    const { error } = await (supabase.from('profiles') as any)
+      .update({ telegram_chat_id: chatId.trim() || null })
+      .eq('user_id', user.id);
+    setSaving(false);
+    if (error) { setErr(error.message); return; }
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2000);
+  };
+
+  return (
+    <div className="glass-card rounded-xl p-5 space-y-3 border border-trading-orange/20">
+      <h3 className="text-sm font-semibold text-trading-orange uppercase tracking-wider">MT4 / MT5 Telegram Bridge</h3>
+      <p className="text-xs text-muted-foreground leading-relaxed">
+        Connect a Telegram channel so signals auto-post in a copier-bot-friendly format. Pair with <b>TeleTrader</b>, <b>TelegramFX Copier</b>, or <b>Profit-Way</b> on your MT5 to fire trades hands-free.
+      </p>
+      <ol className="text-[11px] text-muted-foreground list-decimal pl-4 space-y-1">
+        <li>Create a private Telegram channel.</li>
+        <li>Add <b>@MidnightPandaBot</b> as admin (or message <b>@userinfobot</b> to grab your chat ID).</li>
+        <li>Paste your numeric chat ID below (e.g. <code className="text-foreground">-1001234567890</code>).</li>
+        <li>On MT5, install a Telegram copier EA and point it at the same channel.</li>
+      </ol>
+      <div className="space-y-2">
+        <Label className="text-xs">Telegram Chat ID</Label>
+        <Input
+          value={chatId}
+          onChange={(e) => setChatId(e.target.value)}
+          placeholder="-1001234567890"
+          className="bg-background border-border font-mono"
+          disabled={loading}
+        />
+      </div>
+      {err && <p className="text-xs text-trading-red">{err}</p>}
+      <Button onClick={save} disabled={saving || loading} className="w-full btn-primary">
+        {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : saved ? <><Check className="w-4 h-4 mr-2" /> Saved</> : 'Save Chat ID'}
+      </Button>
+    </div>
+  );
+}
+
+
