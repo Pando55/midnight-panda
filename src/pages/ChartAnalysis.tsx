@@ -460,6 +460,13 @@ export default function ChartAnalysis({ onNavigate }: ChartAnalysisProps) {
                   <p className="text-xs text-muted-foreground mb-1">Risk : Reward</p>
                   <p className="text-2xl font-bold text-foreground">{analysis.riskReward}</p>
                 </div>
+
+                <Button
+                  onClick={() => { setTgMsg(''); setTgOpen(true); }}
+                  className="w-full bg-[hsl(var(--trading-green))] text-foreground hover:opacity-90 gap-2"
+                >
+                  <Send className="w-4 h-4" /> Send to MT4/MT5 via Telegram
+                </Button>
               </>
             )}
 
