@@ -501,6 +501,44 @@ export default function ChartAnalysis({ onNavigate }: ChartAnalysisProps) {
           </div>
         )}
       </div>
+
+      <Dialog open={tgOpen} onOpenChange={setTgOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Send signal to MT4/MT5</DialogTitle>
+            <DialogDescription>
+              Posts to your Telegram channel in a copier-bot-friendly format. Set your channel in Profile first.
+            </DialogDescription>
+          </DialogHeader>
+          {analysis && (
+            <div className="space-y-3">
+              <div className="rounded-lg bg-secondary p-3 text-xs font-mono space-y-0.5">
+                <div>{analysis.sentiment === 'BULLISH' ? 'BUY' : 'SELL'} {(pair || analysis.asset).replace(/[\s/]/g,'').toUpperCase()}</div>
+                <div>Entry: <span className="text-primary">{analysis.entry.price}</span></div>
+                <div>SL: <span className="text-destructive">{analysis.stopLoss.price}</span></div>
+                <div>TP: <span className="text-[hsl(var(--trading-green))]">{analysis.takeProfit.price}</span></div>
+              </div>
+              <div>
+                <Label className="text-xs">Lot size</Label>
+                <Input
+                  type="number" step="0.01" min="0.01"
+                  value={tgLot}
+                  onChange={(e) => setTgLot(e.target.value)}
+                  className="bg-secondary font-mono"
+                />
+                <p className="text-[10px] text-muted-foreground mt-1">Risk per trade is your call — start small.</p>
+              </div>
+              {tgMsg && (
+                <p className={cn('text-xs', tgMsg.startsWith('✅') ? 'text-[hsl(var(--trading-green))]' : 'text-destructive')}>{tgMsg}</p>
+              )}
+              <Button onClick={sendToTelegram} disabled={tgSending} className="w-full bg-trading-orange hover:opacity-90">
+                {tgSending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Send className="w-4 h-4 mr-2" />}
+                Fire signal to Telegram
+              </Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
