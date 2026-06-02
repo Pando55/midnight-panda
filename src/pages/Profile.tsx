@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 import { User, Key, Calendar, Check, Copy, LogOut, Clock, AlertCircle, Loader2, Crown, Mail, Trash2, XCircle } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useCopy } from '@/hooks/useCopy';
