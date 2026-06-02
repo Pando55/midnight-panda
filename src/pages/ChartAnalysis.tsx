@@ -1,10 +1,12 @@
 import { useState, useRef } from 'react';
-import { Upload, Loader2, Target, AlertTriangle, TrendingUp, Shield, BarChart3, X, Lock, MessageCircle, Camera } from 'lucide-react';
+import { Upload, Loader2, Target, AlertTriangle, TrendingUp, Shield, BarChart3, X, Lock, MessageCircle, Camera, Send } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
 
 interface ChartAnalysisProps {
@@ -62,6 +64,40 @@ export default function ChartAnalysis({ onNavigate }: ChartAnalysisProps) {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysis, setAnalysis] = useState<ChartAIAnalysis | null>(null);
   const [error, setError] = useState('');
+  const [tgOpen, setTgOpen] = useState(false);
+  const [tgLot, setTgLot] = useState('0.01');
+  const [tgSending, setTgSending] = useState(false);
+  const [tgMsg, setTgMsg] = useState('');
+
+  const sendToTelegram = async () => {
+    if (!analysis) return;
+    setTgSending(true); setTgMsg('');
+    const symbol = (pair || analysis.asset || '').replace(/[\s/]/g, '').toUpperCase();
+    const direction = analysis.sentiment === 'BULLISH' ? 'BUY' : analysis.sentiment === 'BEARISH' ? 'SELL' : '';
+    if (!direction) { setTgMsg('No directional signal — skipped.'); setTgSending(false); return; }
+    try {
+      const { data, error } = await supabase.functions.invoke('send-to-telegram', {
+        body: {
+          symbol,
+          direction,
+          lotSize: tgLot,
+          entry: analysis.entry.price,
+          stopLoss: analysis.stopLoss.price,
+          takeProfit: analysis.takeProfit.price,
+          riskReward: analysis.riskReward,
+          reason: analysis.summary,
+        },
+      });
+      if (error) throw new Error(error.message);
+      if (data?.error) throw new Error(data.error);
+      setTgMsg('✅ Sent to your Telegram channel!');
+      setTimeout(() => setTgOpen(false), 1200);
+    } catch (e) {
+      setTgMsg(e instanceof Error ? e.message : 'Send failed');
+    } finally {
+      setTgSending(false);
+    }
+  };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -424,6 +460,13 @@ export default function ChartAnalysis({ onNavigate }: ChartAnalysisProps) {
                   <p className="text-xs text-muted-foreground mb-1">Risk : Reward</p>
                   <p className="text-2xl font-bold text-foreground">{analysis.riskReward}</p>
                 </div>
+
+                <Button
+                  onClick={() => { setTgMsg(''); setTgOpen(true); }}
+                  className="w-full bg-[hsl(var(--trading-green))] text-foreground hover:opacity-90 gap-2"
+                >
+                  <Send className="w-4 h-4" /> Send to MT4/MT5 via Telegram
+                </Button>
               </>
             )}
 
@@ -458,6 +501,44 @@ export default function ChartAnalysis({ onNavigate }: ChartAnalysisProps) {
           </div>
         )}
       </div>
+
+      <Dialog open={tgOpen} onOpenChange={setTgOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Send signal to MT4/MT5</DialogTitle>
+            <DialogDescription>
+              Posts to your Telegram channel in a copier-bot-friendly format. Set your channel in Profile first.
+            </DialogDescription>
+          </DialogHeader>
+          {analysis && (
+            <div className="space-y-3">
+              <div className="rounded-lg bg-secondary p-3 text-xs font-mono space-y-0.5">
+                <div>{analysis.sentiment === 'BULLISH' ? 'BUY' : 'SELL'} {(pair || analysis.asset).replace(/[\s/]/g,'').toUpperCase()}</div>
+                <div>Entry: <span className="text-primary">{analysis.entry.price}</span></div>
+                <div>SL: <span className="text-destructive">{analysis.stopLoss.price}</span></div>
+                <div>TP: <span className="text-[hsl(var(--trading-green))]">{analysis.takeProfit.price}</span></div>
+              </div>
+              <div>
+                <Label className="text-xs">Lot size</Label>
+                <Input
+                  type="number" step="0.01" min="0.01"
+                  value={tgLot}
+                  onChange={(e) => setTgLot(e.target.value)}
+                  className="bg-secondary font-mono"
+                />
+                <p className="text-[10px] text-muted-foreground mt-1">Risk per trade is your call — start small.</p>
+              </div>
+              {tgMsg && (
+                <p className={cn('text-xs', tgMsg.startsWith('✅') ? 'text-[hsl(var(--trading-green))]' : 'text-destructive')}>{tgMsg}</p>
+              )}
+              <Button onClick={sendToTelegram} disabled={tgSending} className="w-full bg-trading-orange hover:opacity-90">
+                {tgSending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Send className="w-4 h-4 mr-2" />}
+                Fire signal to Telegram
+              </Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
