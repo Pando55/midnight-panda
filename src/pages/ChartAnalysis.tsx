@@ -14,9 +14,19 @@ interface ChartAnalysisProps {
 interface ChartAIAnalysis {
   asset: string;
   timeframe: string;
+  signal_action?: 'TRADE' | 'NO_TRADE';
+  no_trade_reason?: string;
   sentiment: string;
   confidence: number;
   reliability?: 'HIGH' | 'MEDIUM' | 'LOW';
+  structure?: {
+    trend?: string;
+    lastSwingHigh?: string;
+    lastSwingLow?: string;
+    lastEvent?: string;
+    location?: string;
+    liquidityPools?: string[];
+  };
   reasoning?: {
     trend?: string;
     keyLevels?: string;
@@ -295,7 +305,41 @@ export default function ChartAnalysis({ onNavigate }: ChartAnalysisProps) {
                   'bg-yellow-500/20 text-yellow-400 border-yellow-500/30')}>
                   {analysis.sentiment} ({analysis.confidence}%)
                 </span>
+            </div>
+
+            {analysis.signal_action === 'NO_TRADE' && (
+              <div className="rounded-xl p-4 border-2 border-yellow-500/50 bg-yellow-500/10 space-y-1">
+                <div className="flex items-center gap-2">
+                  <AlertTriangle className="w-5 h-5 text-yellow-400" />
+                  <p className="font-bold text-yellow-400">🛑 NO TRADE — Stay Flat</p>
+                </div>
+                <p className="text-xs text-foreground/90">{analysis.no_trade_reason || 'Structure is unclear. Wait for a clean BOS + retest before risking capital.'}</p>
+                <p className="text-[10px] text-muted-foreground italic">Skipping a bad setup is a winning trade.</p>
               </div>
+            )}
+
+            {analysis.structure && (
+              <div className="glass-card rounded-xl p-4 space-y-2">
+                <p className="text-xs text-muted-foreground uppercase font-semibold mb-1">Market Structure</p>
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  {analysis.structure.trend && (<div><span className="text-[10px] text-primary font-bold uppercase block">Trend</span><span className="text-foreground">{analysis.structure.trend}</span></div>)}
+                  {analysis.structure.location && (<div><span className="text-[10px] text-primary font-bold uppercase block">Location</span><span className="text-foreground capitalize">{analysis.structure.location}</span></div>)}
+                  {analysis.structure.lastSwingHigh && (<div><span className="text-[10px] text-primary font-bold uppercase block">Swing High</span><span className="font-mono text-foreground">{analysis.structure.lastSwingHigh}</span></div>)}
+                  {analysis.structure.lastSwingLow && (<div><span className="text-[10px] text-primary font-bold uppercase block">Swing Low</span><span className="font-mono text-foreground">{analysis.structure.lastSwingLow}</span></div>)}
+                </div>
+                {analysis.structure.lastEvent && (
+                  <div><span className="text-[10px] text-primary font-bold uppercase block">Last Event</span><span className="text-xs text-foreground">{analysis.structure.lastEvent}</span></div>
+                )}
+                {analysis.structure.liquidityPools && analysis.structure.liquidityPools.length > 0 && (
+                  <div>
+                    <span className="text-[10px] text-primary font-bold uppercase block">Liquidity Pools</span>
+                    <ul className="text-xs text-foreground list-disc list-inside">
+                      {analysis.structure.liquidityPools.map((l, i) => <li key={i}>{l}</li>)}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            )}
               <p className="text-sm text-muted-foreground">{analysis.summary}</p>
               {analysis.reliability && (
                 <div className="mt-2 flex items-center gap-2">
@@ -344,40 +388,44 @@ export default function ChartAnalysis({ onNavigate }: ChartAnalysisProps) {
               </div>
             )}
 
-            <div className="space-y-2">
-              <div className="p-3 rounded-lg bg-primary/5 border border-primary/20">
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs text-muted-foreground uppercase font-semibold flex items-center gap-1">
-                    <Target className="w-3 h-3" /> Entry
-                  </span>
-                  <span className="text-lg font-mono font-bold text-primary">{analysis.entry.price}</span>
+            {analysis.signal_action !== 'NO_TRADE' && (
+              <>
+                <div className="space-y-2">
+                  <div className="p-3 rounded-lg bg-primary/5 border border-primary/20">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-xs text-muted-foreground uppercase font-semibold flex items-center gap-1">
+                        <Target className="w-3 h-3" /> Entry
+                      </span>
+                      <span className="text-lg font-mono font-bold text-primary">{analysis.entry.price}</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground">{analysis.entry.reason}</p>
+                  </div>
+                  <div className="p-3 rounded-lg bg-destructive/5 border border-destructive/20">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-xs text-muted-foreground uppercase font-semibold flex items-center gap-1">
+                        <Shield className="w-3 h-3" /> Stop Loss
+                      </span>
+                      <span className="text-lg font-mono font-bold text-destructive">{analysis.stopLoss.price}</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground">{analysis.stopLoss.reason}</p>
+                  </div>
+                  <div className="p-3 rounded-lg bg-[hsl(var(--trading-green))]/5 border border-[hsl(var(--trading-green))]/20">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-xs text-muted-foreground uppercase font-semibold flex items-center gap-1">
+                        <TrendingUp className="w-3 h-3" /> Take Profit
+                      </span>
+                      <span className="text-lg font-mono font-bold text-[hsl(var(--trading-green))]">{analysis.takeProfit.price}</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground">{analysis.takeProfit.reason}</p>
+                  </div>
                 </div>
-                <p className="text-xs text-muted-foreground">{analysis.entry.reason}</p>
-              </div>
-              <div className="p-3 rounded-lg bg-destructive/5 border border-destructive/20">
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs text-muted-foreground uppercase font-semibold flex items-center gap-1">
-                    <Shield className="w-3 h-3" /> Stop Loss
-                  </span>
-                  <span className="text-lg font-mono font-bold text-destructive">{analysis.stopLoss.price}</span>
-                </div>
-                <p className="text-xs text-muted-foreground">{analysis.stopLoss.reason}</p>
-              </div>
-              <div className="p-3 rounded-lg bg-[hsl(var(--trading-green))]/5 border border-[hsl(var(--trading-green))]/20">
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs text-muted-foreground uppercase font-semibold flex items-center gap-1">
-                    <TrendingUp className="w-3 h-3" /> Take Profit
-                  </span>
-                  <span className="text-lg font-mono font-bold text-[hsl(var(--trading-green))]">{analysis.takeProfit.price}</span>
-                </div>
-                <p className="text-xs text-muted-foreground">{analysis.takeProfit.reason}</p>
-              </div>
-            </div>
 
-            <div className="glass-card rounded-xl p-4 text-center">
-              <p className="text-xs text-muted-foreground mb-1">Risk : Reward</p>
-              <p className="text-2xl font-bold text-foreground">{analysis.riskReward}</p>
-            </div>
+                <div className="glass-card rounded-xl p-4 text-center">
+                  <p className="text-xs text-muted-foreground mb-1">Risk : Reward</p>
+                  <p className="text-2xl font-bold text-foreground">{analysis.riskReward}</p>
+                </div>
+              </>
+            )}
 
             {analysis.keyLevels.length > 0 && (
               <div className="glass-card rounded-xl p-4">
