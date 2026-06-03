@@ -110,6 +110,90 @@ export type Database = {
         }
         Relationships: []
       }
+      telegram_updates: {
+        Row: {
+          chat_id: number | null
+          created_at: string
+          raw_update: Json
+          update_id: number
+        }
+        Insert: {
+          chat_id?: number | null
+          created_at?: string
+          raw_update: Json
+          update_id: number
+        }
+        Update: {
+          chat_id?: number | null
+          created_at?: string
+          raw_update?: Json
+          update_id?: number
+        }
+        Relationships: []
+      }
+      telegram_users: {
+        Row: {
+          account_number: string | null
+          account_type: string | null
+          broker: string | null
+          chat_id: number
+          created_at: string
+          id: string
+          instrument: string | null
+          license_key: string | null
+          linked_user_id: string | null
+          lot_size: number | null
+          max_positions: number | null
+          onboarded_at: string | null
+          telegram_username: string | null
+          timeframe: string | null
+          trailing_stop_pips: number | null
+          updated_at: string
+          wizard_data: Json
+          wizard_state: string
+        }
+        Insert: {
+          account_number?: string | null
+          account_type?: string | null
+          broker?: string | null
+          chat_id: number
+          created_at?: string
+          id?: string
+          instrument?: string | null
+          license_key?: string | null
+          linked_user_id?: string | null
+          lot_size?: number | null
+          max_positions?: number | null
+          onboarded_at?: string | null
+          telegram_username?: string | null
+          timeframe?: string | null
+          trailing_stop_pips?: number | null
+          updated_at?: string
+          wizard_data?: Json
+          wizard_state?: string
+        }
+        Update: {
+          account_number?: string | null
+          account_type?: string | null
+          broker?: string | null
+          chat_id?: number
+          created_at?: string
+          id?: string
+          instrument?: string | null
+          license_key?: string | null
+          linked_user_id?: string | null
+          lot_size?: number | null
+          max_positions?: number | null
+          onboarded_at?: string | null
+          telegram_username?: string | null
+          timeframe?: string | null
+          trailing_stop_pips?: number | null
+          updated_at?: string
+          wizard_data?: Json
+          wizard_state?: string
+        }
+        Relationships: []
+      }
       trader_profiles: {
         Row: {
           avatar_emoji: string
