@@ -61,6 +61,9 @@ export default function ChartAnalysis({ onNavigate }: ChartAnalysisProps) {
   const [timeframe, setTimeframe] = useState('');
   const [currentPrice, setCurrentPrice] = useState('');
   const [notes, setNotes] = useState('');
+  const [aggressiveness, setAggressiveness] = useState<string>(() =>
+    (typeof window !== 'undefined' && localStorage.getItem('mp_aggressiveness')) || 'balanced'
+  );
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysis, setAnalysis] = useState<ChartAIAnalysis | null>(null);
   const [error, setError] = useState('');
@@ -149,7 +152,7 @@ export default function ChartAnalysis({ onNavigate }: ChartAnalysisProps) {
 
       const strategy = (typeof window !== 'undefined' && localStorage.getItem('mp_strategy')) || 'intraday';
       const { data, error: fnError } = await supabase.functions.invoke('analyze-chart', {
-        body: { imageBase64, mimeType, pair, timeframe, notes, currentPrice, strategy },
+        body: { imageBase64, mimeType, pair, timeframe, notes, currentPrice, strategy, aggressiveness },
       });
 
       if (fnError) throw new Error(fnError.message || 'Analysis failed');
@@ -292,6 +295,31 @@ export default function ChartAnalysis({ onNavigate }: ChartAnalysisProps) {
                 className="bg-card border-border text-sm"
               />
               <p className="text-[10px] text-muted-foreground mt-1">Grounds the AI so Entry/SL/TP aren't guessed.</p>
+            </div>
+            <div>
+              <label className="text-xs text-muted-foreground mb-1 block">Signal Aggressiveness</label>
+              <div className="grid grid-cols-3 gap-1 bg-card border border-border rounded-lg p-1">
+                {(['conservative','balanced','aggressive'] as const).map(m => (
+                  <button
+                    key={m}
+                    type="button"
+                    onClick={() => { setAggressiveness(m); localStorage.setItem('mp_aggressiveness', m); }}
+                    className={cn(
+                      'text-[11px] py-1.5 rounded font-semibold capitalize transition',
+                      aggressiveness === m
+                        ? 'bg-primary text-primary-foreground'
+                        : 'text-muted-foreground hover:text-foreground'
+                    )}
+                  >
+                    {m}
+                  </button>
+                ))}
+              </div>
+              <p className="text-[10px] text-muted-foreground mt-1">
+                {aggressiveness === 'aggressive' && 'More signals, lower bar (55%+). Use tight risk.'}
+                {aggressiveness === 'balanced' && 'Fewer NO_TRADEs, still disciplined (60%+).'}
+                {aggressiveness === 'conservative' && 'A+ setups only (70%+). Expect frequent NO_TRADE.'}
+              </p>
             </div>
             <div>
               <label className="text-xs text-muted-foreground mb-1 block">Notes (optional)</label>

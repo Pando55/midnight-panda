@@ -113,6 +113,7 @@ export default function LiveOverlay() {
           pair,
           timeframe,
           strategy,
+          aggressiveness: localStorage.getItem('mp_aggressiveness') || 'balanced',
           notes: 'Live overlay scan — read price + structure directly from the visible chart.',
         },
       });
