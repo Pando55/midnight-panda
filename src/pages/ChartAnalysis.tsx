@@ -61,6 +61,9 @@ export default function ChartAnalysis({ onNavigate }: ChartAnalysisProps) {
   const [timeframe, setTimeframe] = useState('');
   const [currentPrice, setCurrentPrice] = useState('');
   const [notes, setNotes] = useState('');
+  const [aggressiveness, setAggressiveness] = useState<string>(() =>
+    (typeof window !== 'undefined' && localStorage.getItem('mp_aggressiveness')) || 'balanced'
+  );
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysis, setAnalysis] = useState<ChartAIAnalysis | null>(null);
   const [error, setError] = useState('');
