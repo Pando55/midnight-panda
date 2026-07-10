@@ -148,8 +148,9 @@ export default function ChartAnalysis({ onNavigate }: ChartAnalysisProps) {
       const mimeType = selectedFile.type || 'image/jpeg';
 
       const strategy = (typeof window !== 'undefined' && localStorage.getItem('mp_strategy')) || 'intraday';
+      const aggressiveness = (typeof window !== 'undefined' && localStorage.getItem('mp_aggressiveness')) || 'balanced';
       const { data, error: fnError } = await supabase.functions.invoke('analyze-chart', {
-        body: { imageBase64, mimeType, pair, timeframe, notes, currentPrice, strategy },
+        body: { imageBase64, mimeType, pair, timeframe, notes, currentPrice, strategy, aggressiveness },
       });
 
       if (fnError) throw new Error(fnError.message || 'Analysis failed');
