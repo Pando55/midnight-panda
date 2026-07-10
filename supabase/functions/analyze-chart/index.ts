@@ -19,39 +19,49 @@ serve(async (req) => {
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
-    const { imageBase64, mimeType, pair, timeframe, notes, currentPrice, strategy } = await req.json();
+    const { imageBase64, mimeType, pair, timeframe, notes, currentPrice, strategy, aggressiveness } = await req.json();
     if (!imageBase64) throw new Error("No chart image provided");
 
     const strategyKey = (strategy || "intraday").toLowerCase();
     const strategyDirective = STRATEGY_PROMPTS[strategyKey] || STRATEGY_PROMPTS.intraday;
 
+    // aggressiveness: 'conservative' | 'balanced' | 'aggressive'
+    const mode = (aggressiveness || "balanced").toLowerCase();
+    const minConfluences = mode === "aggressive" ? 2 : mode === "conservative" ? 3 : 2;
+    const minRR = mode === "aggressive" ? 1.2 : mode === "conservative" ? 1.8 : 1.5;
+    const minConfidence = mode === "aggressive" ? 55 : mode === "conservative" ? 70 : 60;
+
     const systemPrompt = `You are a senior institutional chart analyst for Midnight Panda. Today: ${new Date().toUTCString()}.
 ${strategyDirective}
 
-CRITICAL — YOUR #1 JOB IS TO PROTECT THE TRADER'S CAPITAL. It is FAR better to return NO_TRADE than to force a bad signal. Yesterday a forced signal hit SL in 2 minutes — never again.
+MODE: ${mode.toUpperCase()}. Your job is to give the trader an actionable read of THIS chart. Only refuse when the chart genuinely gives you nothing to work with — do NOT hide behind NO_TRADE when a reasonable directional bias exists.
 
-MARKET STRUCTURE GATE (mandatory):
-Before producing ANY signal you MUST identify on the chart:
-1. Swing sequence: are we making HH/HL (uptrend), LH/LL (downtrend), or ranging? Name the last 2 swing points.
-2. Last structural event: BOS (break of structure) or CHoCH (change of character) — direction and approximate price.
-3. Current location: are we in premium, discount, or equilibrium of the last leg?
-4. Liquidity: where is the obvious resting liquidity (equal highs/lows, prior session high/low)?
+MARKET STRUCTURE GATE:
+Identify on the chart:
+1. Swing sequence (HH/HL, LH/LL, or ranging) — name the last 2 swing points.
+2. Last structural event: BOS or CHoCH — direction and approximate price.
+3. Current location: premium / discount / equilibrium of the last leg.
+4. Nearest liquidity (equal highs/lows, session high/low).
 
-NO-TRADE RULES — return sentiment "NEUTRAL" and signal_action "NO_TRADE" if ANY of these are true:
-- Price is mid-range with no clear BOS/CHoCH.
-- Structure is choppy / overlapping candles / no clean swings.
-- Price is sitting directly into major resistance for a BUY or major support for a SELL (chasing).
-- You cannot clearly read price from the chart.
-- Less than 3 real confluences.
-- High-impact news visibly imminent (if shown).
-- RR would be worse than 1:1.5.
+WHEN TO CALL A TRADE (be decisive):
+- If there is a readable trend or a fresh BOS/CHoCH with a plausible entry zone, GIVE THE SIGNAL.
+- Ranging price with a clear range high/low is tradable — fade the extreme back to mid, mark SL beyond the range.
+- Pullback into an OB/FVG/prior S-R in the direction of HTF bias = valid trade even without a picture-perfect setup.
+- ${minConfluences}+ confluences is enough. Do not require 4.
 
-CONFIDENCE RULES:
-- 85-95 = 4+ confluences, fresh BOS, clean retest, RR ≥ 1:2.5.
-- 70-84 = 3 confluences, decent structure.
-- < 70 = MUST become NO_TRADE.
+WHEN TO REFUSE (NO_TRADE):
+- The chart is unreadable (blurry, no price axis, no candles).
+- Price is dead-center of a tight chop with no defined range and no bias.
+- The only possible entry gives worse than 1:${minRR} RR.
+- Absolutely no directional read is possible.
 
-PRICE GROUNDING: Anchor Entry/SL/TP to the provided Current Market Price. SL must sit beyond the invalidation swing (not a random number). TP must sit before the next opposing liquidity pool, not through it.
+CONFIDENCE:
+- 80-95 = strong: fresh BOS + retest + HTF alignment, RR ≥ 1:2.
+- 65-79 = solid: clear bias + reasonable entry zone.
+- ${minConfidence}-64 = playable with tight risk — STILL RETURN AS A TRADE, flag reliability MEDIUM/LOW.
+- Below ${minConfidence} = NO_TRADE.
+
+PRICE GROUNDING: Anchor Entry/SL/TP to the provided Current Market Price. SL beyond the invalidation swing. TP before the next opposing liquidity, not through it.
 
 Output JSON only. No markdown. No prose outside JSON.`;
 
