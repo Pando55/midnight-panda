@@ -160,19 +160,19 @@ Walk through the Market Structure Gate, then output ONLY this JSON:
       });
     }
 
-    // Server-side discipline guard
+    // Server-side discipline guard — respect selected aggressiveness
     const conf = typeof analysis.confidence === "number" ? analysis.confidence : 0;
-    if (conf < 70 || analysis.signal_action === "NO_TRADE") {
+    if (conf < minConfidence || analysis.signal_action === "NO_TRADE") {
       analysis.signal_action = "NO_TRADE";
       analysis.sentiment = "NEUTRAL";
       analysis.reliability = "LOW";
-      analysis.warning = `🛑 NO-TRADE SIGNAL. ${analysis.no_trade_reason || analysis.warning || "Structure unclear — wait for a clean BOS + retest."}`;
+      analysis.warning = `🛑 NO-TRADE. ${analysis.no_trade_reason || analysis.warning || "Chart is not readable or has no directional bias — switch to a higher timeframe or wait for a clean BOS/CHoCH."}`;
       analysis.entry = { price: "N/A", reason: "No trade" };
       analysis.stopLoss = { price: "N/A", reason: "No trade" };
       analysis.takeProfit = { price: "N/A", reason: "No trade" };
       analysis.riskReward = "N/A";
     } else if (!analysis.reliability) {
-      analysis.reliability = conf >= 85 ? "HIGH" : "MEDIUM";
+      analysis.reliability = conf >= 80 ? "HIGH" : conf >= 65 ? "MEDIUM" : "LOW";
     }
 
     return new Response(JSON.stringify({ analysis }), {
