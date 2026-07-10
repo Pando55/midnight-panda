@@ -297,6 +297,31 @@ export default function ChartAnalysis({ onNavigate }: ChartAnalysisProps) {
               <p className="text-[10px] text-muted-foreground mt-1">Grounds the AI so Entry/SL/TP aren't guessed.</p>
             </div>
             <div>
+              <label className="text-xs text-muted-foreground mb-1 block">Signal Aggressiveness</label>
+              <div className="grid grid-cols-3 gap-1 bg-card border border-border rounded-lg p-1">
+                {(['conservative','balanced','aggressive'] as const).map(m => (
+                  <button
+                    key={m}
+                    type="button"
+                    onClick={() => { setAggressiveness(m); localStorage.setItem('mp_aggressiveness', m); }}
+                    className={cn(
+                      'text-[11px] py-1.5 rounded font-semibold capitalize transition',
+                      aggressiveness === m
+                        ? 'bg-primary text-primary-foreground'
+                        : 'text-muted-foreground hover:text-foreground'
+                    )}
+                  >
+                    {m}
+                  </button>
+                ))}
+              </div>
+              <p className="text-[10px] text-muted-foreground mt-1">
+                {aggressiveness === 'aggressive' && 'More signals, lower bar (55%+). Use tight risk.'}
+                {aggressiveness === 'balanced' && 'Fewer NO_TRADEs, still disciplined (60%+).'}
+                {aggressiveness === 'conservative' && 'A+ setups only (70%+). Expect frequent NO_TRADE.'}
+              </p>
+            </div>
+            <div>
               <label className="text-xs text-muted-foreground mb-1 block">Notes (optional)</label>
               <Textarea
                 placeholder="Any context about your setup..."
