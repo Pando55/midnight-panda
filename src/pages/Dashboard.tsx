@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { TrendingUp, TrendingDown, Globe, AlertTriangle, Zap, Target, BarChart3, ArrowRight, Copy, Check, RefreshCw, Send, Bell, BellRing } from 'lucide-react';
+import { TrendingUp, TrendingDown, Globe, AlertTriangle, Zap, Target, BarChart3, ArrowRight, Copy, Check, RefreshCw, Send, Bell, BellRing, ScanLine } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useCopy } from '@/hooks/useCopy';
 import { useMarketData } from '@/hooks/useMarketData';
@@ -225,7 +225,7 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
 
         <section className="animate-slide-up animation-delay-400">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Recent Signals</h3>
+            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Signal Desk · supporting</h3>
             <button onClick={() => onNavigate('signals')} className="flex items-center gap-1 text-sm text-trading-orange hover:text-trading-orange-light transition-colors">
               View All <ArrowRight className="w-4 h-4" />
             </button>
