@@ -9,8 +9,8 @@ interface BottomNavProps {
 
 const tabs: { id: TabName; label: string; icon: typeof LayoutDashboard }[] = [
   { id: 'dashboard', label: 'Home', icon: LayoutDashboard },
+  { id: 'chart-analysis', label: 'Analyze', icon: Camera },
   { id: 'signals', label: 'Signals', icon: Zap },
-  { id: 'chart-analysis', label: 'Charts', icon: Camera },
   { id: 'live-overlay', label: 'Overlay', icon: Eye },
   { id: 'ai-assistant', label: 'AI', icon: Sparkles },
   { id: 'journal', label: 'Journal', icon: BookOpen },

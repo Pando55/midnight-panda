@@ -204,8 +204,8 @@ export default function ChartAnalysis({ onNavigate }: ChartAnalysisProps) {
     <div className="min-h-screen pb-24 bg-background">
       <header className="sticky top-0 z-40 bg-background/95 backdrop-blur-xl border-b border-border">
         <div className="px-4 py-4">
-          <h1 className="text-xl font-semibold text-foreground font-display">📊 Chart Analysis</h1>
-          <p className="text-sm text-muted-foreground">Upload your chart for AI-powered Entry, SL & TP</p>
+          <h1 className="text-xl font-semibold text-foreground font-display">📊 AI Chart Analyzer</h1>
+          <p className="text-sm text-muted-foreground">A structured second opinion in seconds — including when the best trade is no trade.</p>
         </div>
       </header>
 
@@ -223,6 +223,7 @@ export default function ChartAnalysis({ onNavigate }: ChartAnalysisProps) {
               <div className="text-center">
                 <p className="text-sm font-medium text-foreground">Upload from gallery</p>
                 <p className="text-xs text-muted-foreground mt-1">JPG, PNG, screenshot — max 5MB</p>
+                <p className="text-[11px] text-muted-foreground mt-2 max-w-xs">Midnight Panda explains what the chart is showing and where the setup breaks. Final decision and risk stay yours.</p>
               </div>
             </button>
             <button
