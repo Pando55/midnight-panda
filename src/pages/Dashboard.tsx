@@ -81,12 +81,52 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
             Welcome back, <span className="text-trading-orange">{user?.name || 'Trader'}</span>
           </h2>
           <p className="text-muted-foreground mt-1">
-            {hasValidLicense ? 'Your license is active. Access all premium signals.' : 'Activate your license to access premium signals.'}
+            Your AI trading co-pilot. Upload a chart, get a structured second opinion.
           </p>
           {lastUpdated && (
             <p className="text-xs text-muted-foreground mt-1">Prices updated: {lastUpdated.toLocaleTimeString()}</p>
           )}
         </div>
+
+        {/* Primary product: AI Chart Analyzer */}
+        <section className="animate-slide-up">
+          <button
+            onClick={() => onNavigate('chart-analysis')}
+            className="w-full text-left glass-card rounded-2xl p-5 border border-trading-orange/30 hover:border-trading-orange/60 transition-all shadow-glow"
+          >
+            <div className="flex items-start gap-3">
+              <div className="w-11 h-11 rounded-xl bg-trading-orange/15 border border-trading-orange/30 flex items-center justify-center shrink-0">
+                <ScanLine className="w-6 h-6 text-trading-orange" />
+              </div>
+              <div className="flex-1">
+                <p className="text-xs uppercase tracking-wider text-trading-orange font-semibold">AI Chart Analyzer</p>
+                <h3 className="text-lg font-semibold text-foreground mt-0.5">Stop staring at charts</h3>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Upload yours and get a structured second opinion in seconds — what the chart is showing,
+                  where the setup breaks, and when the best trade is <span className="text-foreground font-medium">no trade</span>.
+                </p>
+                <span className="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-trading-orange">
+                  Analyze a chart <ArrowRight className="w-4 h-4" />
+                </span>
+              </div>
+            </div>
+          </button>
+          <div className="grid grid-cols-2 gap-2 mt-2">
+            <button onClick={() => onNavigate('live-overlay')} className="glass-card rounded-xl p-3 text-left card-hover">
+              <p className="text-sm font-medium text-foreground">Live Overlay</p>
+              <p className="text-[11px] text-muted-foreground">Read a chart while it moves</p>
+            </button>
+            <button onClick={() => onNavigate('journal')} className="glass-card rounded-xl p-3 text-left card-hover">
+              <p className="text-sm font-medium text-foreground">Trade Journal</p>
+              <p className="text-[11px] text-muted-foreground">Review your own decisions</p>
+            </button>
+          </div>
+          <p className="text-[11px] text-muted-foreground mt-2 leading-relaxed">
+            Midnight Panda is a disciplined second opinion, not an unquestionable signal generator. Read the reasoning,
+            respect the uncertainty, and size your own risk.
+          </p>
+        </section>
+
 
         {canPush && permission !== 'granted' && (
           <button
