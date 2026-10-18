@@ -14,6 +14,56 @@ export type Database = {
   }
   public: {
     Tables: {
+      chart_scans: {
+        Row: {
+          account_id: string | null
+          analysis: Json
+          created_at: string
+          expires_at: string
+          id: string
+          invalidated: boolean
+          outcome: string
+          source: string
+          symbol: string
+          timeframe: string
+          user_id: string
+        }
+        Insert: {
+          account_id?: string | null
+          analysis: Json
+          created_at?: string
+          expires_at?: string
+          id?: string
+          invalidated?: boolean
+          outcome: string
+          source: string
+          symbol: string
+          timeframe: string
+          user_id: string
+        }
+        Update: {
+          account_id?: string | null
+          analysis?: Json
+          created_at?: string
+          expires_at?: string
+          id?: string
+          invalidated?: boolean
+          outcome?: string
+          source?: string
+          symbol?: string
+          timeframe?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chart_scans_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "trading_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       chat_messages: {
         Row: {
           created_at: string
@@ -42,6 +92,7 @@ export type Database = {
         Row: {
           activated_at: string | null
           activated_by_user_id: string | null
+          auto_trading_enabled: boolean
           created_at: string
           created_by_user_id: string | null
           customer_email: string
@@ -55,6 +106,7 @@ export type Database = {
         Insert: {
           activated_at?: string | null
           activated_by_user_id?: string | null
+          auto_trading_enabled?: boolean
           created_at?: string
           created_by_user_id?: string | null
           customer_email: string
@@ -68,6 +120,7 @@ export type Database = {
         Update: {
           activated_at?: string | null
           activated_by_user_id?: string | null
+          auto_trading_enabled?: boolean
           created_at?: string
           created_by_user_id?: string | null
           customer_email?: string
@@ -194,6 +247,69 @@ export type Database = {
         }
         Relationships: []
       }
+      trade_requests: {
+        Row: {
+          account_id: string
+          claimed_at: string | null
+          created_at: string
+          expires_at: string
+          id: string
+          idempotency_key: string
+          kind: string
+          mode: string
+          payload: Json
+          result: Json
+          scan_id: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          account_id: string
+          claimed_at?: string | null
+          created_at?: string
+          expires_at?: string
+          id?: string
+          idempotency_key: string
+          kind: string
+          mode?: string
+          payload: Json
+          result?: Json
+          scan_id?: string | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          account_id?: string
+          claimed_at?: string | null
+          created_at?: string
+          expires_at?: string
+          id?: string
+          idempotency_key?: string
+          kind?: string
+          mode?: string
+          payload?: Json
+          result?: Json
+          scan_id?: string | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trade_requests_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "trading_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trade_requests_scan_id_fkey"
+            columns: ["scan_id"]
+            isOneToOne: false
+            referencedRelation: "chart_scans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       trader_profiles: {
         Row: {
           avatar_emoji: string
@@ -241,6 +357,110 @@ export type Database = {
           winning_trades?: number
         }
         Relationships: []
+      }
+      trading_accounts: {
+        Row: {
+          account_mode: string
+          account_number: string
+          authorization_expires_at: string | null
+          authorization_license_id: string | null
+          balance: number
+          broker: string
+          created_at: string
+          credential_hash: string | null
+          currency: string
+          daily_loss_percent: number
+          demo_verified_at: string | null
+          equity: number
+          free_margin: number
+          id: string
+          is_demo: boolean
+          last_sync_at: string | null
+          live_enabled: boolean
+          max_exposure_lots: number
+          max_risk_percent: number
+          pair_code_hash: string | null
+          pair_expires_at: string | null
+          paired_at: string | null
+          platform: string
+          selected_symbol: string
+          selected_timeframe: string
+          server: string
+          snapshot: Json
+          stopped: boolean
+          user_id: string
+        }
+        Insert: {
+          account_mode?: string
+          account_number: string
+          authorization_expires_at?: string | null
+          authorization_license_id?: string | null
+          balance?: number
+          broker: string
+          created_at?: string
+          credential_hash?: string | null
+          currency?: string
+          daily_loss_percent?: number
+          demo_verified_at?: string | null
+          equity?: number
+          free_margin?: number
+          id?: string
+          is_demo?: boolean
+          last_sync_at?: string | null
+          live_enabled?: boolean
+          max_exposure_lots?: number
+          max_risk_percent?: number
+          pair_code_hash?: string | null
+          pair_expires_at?: string | null
+          paired_at?: string | null
+          platform: string
+          selected_symbol?: string
+          selected_timeframe?: string
+          server: string
+          snapshot?: Json
+          stopped?: boolean
+          user_id: string
+        }
+        Update: {
+          account_mode?: string
+          account_number?: string
+          authorization_expires_at?: string | null
+          authorization_license_id?: string | null
+          balance?: number
+          broker?: string
+          created_at?: string
+          credential_hash?: string | null
+          currency?: string
+          daily_loss_percent?: number
+          demo_verified_at?: string | null
+          equity?: number
+          free_margin?: number
+          id?: string
+          is_demo?: boolean
+          last_sync_at?: string | null
+          live_enabled?: boolean
+          max_exposure_lots?: number
+          max_risk_percent?: number
+          pair_code_hash?: string | null
+          pair_expires_at?: string | null
+          paired_at?: string | null
+          platform?: string
+          selected_symbol?: string
+          selected_timeframe?: string
+          server?: string
+          snapshot?: Json
+          stopped?: boolean
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trading_accounts_authorization_license_id_fkey"
+            columns: ["authorization_license_id"]
+            isOneToOne: false
+            referencedRelation: "license_keys"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_licenses: {
         Row: {
@@ -325,12 +545,52 @@ export type Database = {
           license_key: string
         }[]
       }
+      claim_terminal_request: {
+        Args: { aid: string }
+        Returns: {
+          account_id: string
+          claimed_at: string | null
+          created_at: string
+          expires_at: string
+          id: string
+          idempotency_key: string
+          kind: string
+          mode: string
+          payload: Json
+          result: Json
+          scan_id: string | null
+          status: string
+          user_id: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "trade_requests"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      consume_trade_permit: {
+        Args: { order_index: number; rid: string }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
         Returns: boolean
+      }
+      queue_terminal_request: {
+        Args: {
+          aid: string
+          body: Json
+          idem: string
+          knd: string
+          md: string
+          sid: string
+          uid: string
+        }
+        Returns: string
       }
     }
     Enums: {
