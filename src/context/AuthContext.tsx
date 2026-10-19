@@ -3,10 +3,10 @@ import type { User, License, LicenseDuration, AuthState, GeneratedKey } from '@/
 import { supabase } from '@/integrations/supabase/client';
 
 interface AuthContextType extends AuthState {
-  login: (email: string, password: string) => Promise<boolean>;
-  signup: (email: string, password: string, name: string) => Promise<boolean>;
+  login: (email: string, password: string) => Promise<true | string>;
+  signup: (email: string, password: string, name: string) => Promise<true | string>;
   logout: () => void;
-  activateLicense: (key: string) => Promise<boolean>;
+  activateLicense: (key: string) => Promise<true | string>;
   checkLicenseValidity: () => boolean;
   isAdmin: () => boolean;
   getGeneratedKeys: () => GeneratedKey[];
@@ -78,7 +78,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = useCallback(async (email: string, password: string) => {
     setLastError(null);
     const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
-    if (error) { setLastError(error.message); return false; }
+    if (error) { setLastError(error.message); return error.message; }
     return true;
   }, []);
 
@@ -87,8 +87,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const { data, error } = await supabase.auth.signUp({
       email: email.trim(), password, options: { emailRedirectTo: window.location.origin, data: { name } },
     });
-    if (error) { setLastError(error.message); return false; }
-    if (!data.session) setLastError('Check your email and tap the confirmation link, then sign in.');
+    if (error) { setLastError(error.message); return error.message; }
+    if (!data.session) return 'CONFIRM: Check your email and tap the confirmation link, then sign in.';
     return true;
   }, []);
 
@@ -118,7 +118,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const activateLicense = useCallback(async (key: string) => {
     setLastError(null);
     const res = await callLicenseManager({ action: 'activate', key });
-    if (!res?.success) { setLastError(res?.error ?? 'Activation failed'); return false; }
+    if (!res?.success) { setLastError(res?.error ?? 'Activation failed'); return res?.error ?? 'Activation failed'; }
     const l = res.license;
     const license: License = { key: l.key, duration: l.duration, activatedAt: new Date(l.activatedAt), expiresAt: l.expiresAt ? new Date(l.expiresAt) : null, isActive: true };
     setState(prev => ({ ...prev, license }));

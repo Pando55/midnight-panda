@@ -28,7 +28,7 @@ export default function Login({ onNavigate }: LoginProps) {
     setIsLoading(true);
     const success = await login(email, password);
     setIsLoading(false);
-    if (success) { onNavigate('dashboard'); } else { setError('Invalid email or password'); }
+    if (success === true) { onNavigate('dashboard'); } else { setError(success); }
   };
 
   return (
