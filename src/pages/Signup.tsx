@@ -32,7 +32,7 @@ export default function Signup({ onNavigate }: SignupProps) {
     setIsLoading(true);
     const success = await signup(email, password, name);
     setIsLoading(false);
-    if (success) { onNavigate('dashboard'); } else { setError('Signup failed. Please try again.'); }
+    if (success === true) { onNavigate('dashboard'); } else if (success.startsWith('CONFIRM: ')) { setError(success.slice(9)); } else { setError(success); }
   };
 
   const strengthColors = { weak: 'bg-trading-red', medium: 'bg-yellow-500', strong: 'bg-trading-green' };

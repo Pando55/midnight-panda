@@ -42,8 +42,8 @@ export default function Profile({ onNavigate }: ProfileProps) {
     setIsActivating(true);
     const success = await activateLicense(licenseKey.trim().toUpperCase());
     setIsActivating(false);
-    if (success) { setActivationSuccess(true); setLicenseKey(''); } 
-    else { setActivationError('Invalid or inactive license key. Format: P-XXXX-XXXX-XXXX'); }
+    if (success === true) { setActivationSuccess(true); setLicenseKey(''); }
+    else { setActivationError(success); }
   };
 
   const handleGenerateKey = async () => {

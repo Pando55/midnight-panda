@@ -1,131 +1,82 @@
-// Public license manager edge function.
-// Handles activation (any user) and admin operations (list/create/deactivate/delete)
-// using a hardcoded admin email gate. Uses service role to bypass RLS safely.
+// Server-side license administration. Admin actions require a verified sign-in
+// that holds the admin role (or the verified owner email). Activation uses the
+// signed-in user's token and the activate_license_key database function.
+import { createClient } from "npm:@supabase/supabase-js@2";
+import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.7";
-
-const ADMIN_EMAIL = "mohalethapelo93@gmail.com";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-};
-
-const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
-const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-const supabase = createClient(SUPABASE_URL, SERVICE_ROLE);
-
+const OWNER_EMAIL = "mohalethapelo93@gmail.com";
+const URL_ = Deno.env.get("SUPABASE_URL")!;
+const SERVICE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+const ANON = Deno.env.get("SUPABASE_ANON_KEY")!;
+const admin = createClient(URL_, SERVICE);
+const DURATIONS = ["3months", "6months", "12months", "18months", "lifetime"];
 const CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-function makeKey() {
-  const part = () => Array.from({ length: 4 }, () => CHARS[Math.floor(Math.random() * CHARS.length)]).join("");
-  return `P-${part()}-${part()}-${part()}`;
-}
-
-function durationToMs(d: string): number | null {
-  switch (d) {
-    case "3months": return 90 * 86400000;
-    case "6months": return 180 * 86400000;
-    case "12months": return 365 * 86400000;
-    case "18months": return 547 * 86400000;
-    case "lifetime": return null;
-    default: return 0;
-  }
-}
-
-function json(body: unknown, status = 200) {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: { ...corsHeaders, "Content-Type": "application/json" },
-  });
-}
+const makeKey = () => {
+  const b = crypto.getRandomValues(new Uint8Array(12));
+  const s = Array.from(b, (x) => CHARS[x % CHARS.length]).join("");
+  return `P-${s.slice(0, 4)}-${s.slice(4, 8)}-${s.slice(8, 12)}`;
+};
+const json = (body: unknown, status = 200) =>
+  new Response(JSON.stringify(body), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
 Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
-
+  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   try {
-    const { action, key, email, duration, keyId, adminEmail } = await req.json();
+    const auth = req.headers.get("Authorization") ?? "";
+    if (!auth.startsWith("Bearer ")) return json({ success: false, error: "Sign in required" }, 401);
+    const userClient = createClient(URL_, ANON, { global: { headers: { Authorization: auth } } });
+    const { data: u } = await userClient.auth.getUser();
+    const user = u?.user;
+    if (!user) return json({ success: false, error: "Sign in required" }, 401);
+    const body = await req.json().catch(() => ({}));
+    const action = String(body.action ?? "");
 
-    // ---- PUBLIC: activate ----
     if (action === "activate") {
-      if (!key) return json({ success: false, error: "Key required" }, 400);
-      const normalized = String(key).toUpperCase().trim();
-      const { data: row, error } = await supabase
-        .from("license_keys")
-        .select("*")
-        .eq("license_key", normalized)
-        .maybeSingle();
-
-      if (error) return json({ success: false, error: error.message }, 500);
-      if (!row) return json({ success: false, error: "Invalid license key" }, 404);
-      if (!row.is_active) return json({ success: false, error: "Key has been deactivated" }, 403);
-
-      // Already activated? Check expiry
-      const now = new Date();
-      let expiresAt: Date | null = row.expires_at ? new Date(row.expires_at) : null;
-      if (!row.activated_at) {
-        const ms = durationToMs(row.duration);
-        expiresAt = ms === null ? null : new Date(now.getTime() + ms);
-        await supabase
-          .from("license_keys")
-          .update({ activated_at: now.toISOString(), expires_at: expiresAt?.toISOString() ?? null })
-          .eq("id", row.id);
-      } else if (expiresAt && expiresAt < now) {
-        return json({ success: false, error: "License expired" }, 403);
-      }
-
-      return json({
-        success: true,
-        license: {
-          key: normalized,
-          duration: row.duration,
-          activatedAt: row.activated_at ?? now.toISOString(),
-          expiresAt: expiresAt?.toISOString() ?? null,
-          isActive: true,
-        },
-      });
+      const key = String(body.key ?? "").toUpperCase().trim();
+      if (!/^P-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/.test(key)) return json({ success: false, error: "Invalid key format" }, 400);
+      const { data, error } = await userClient.rpc("activate_license_key", { _license_key: key });
+      if (error) return json({ success: false, error: error.message }, 403);
+      const r = (data as any[])[0];
+      return json({ success: true, license: { key: r.license_key, duration: r.duration, activatedAt: r.activated_at, expiresAt: r.expires_at, isActive: true } });
     }
 
-    // ---- ADMIN gate ----
-    const isAdmin = adminEmail && String(adminEmail).toLowerCase() === ADMIN_EMAIL;
-    if (!isAdmin) return json({ success: false, error: "Unauthorized" }, 401);
+    if (action === "status") {
+      const { data } = await admin.from("user_licenses").select("license_key,duration,activated_at,expires_at,is_active,license_key_id").eq("user_id", user.id).maybeSingle();
+      let license = null;
+      if (data) {
+        const { data: k } = await admin.from("license_keys").select("is_active").eq("id", data.license_key_id).maybeSingle();
+        const valid = data.is_active && k?.is_active && (!data.expires_at || new Date(data.expires_at) > new Date());
+        license = { key: data.license_key, duration: data.duration, activatedAt: data.activated_at, expiresAt: data.expires_at, isActive: !!valid };
+      }
+      const { data: role } = await admin.from("user_roles").select("role").eq("user_id", user.id).eq("role", "admin").maybeSingle();
+      const isAdmin = !!role || (!!user.email_confirmed_at && user.email?.toLowerCase() === OWNER_EMAIL);
+      return json({ success: true, license, isAdmin });
+    }
+
+    const { data: role } = await admin.from("user_roles").select("role").eq("user_id", user.id).eq("role", "admin").maybeSingle();
+    const isAdmin = !!role || (!!user.email_confirmed_at && user.email?.toLowerCase() === OWNER_EMAIL);
+    if (!isAdmin) return json({ success: false, error: "Unauthorized" }, 403);
 
     if (action === "list") {
-      const { data, error } = await supabase
-        .from("license_keys")
-        .select("*")
-        .order("created_at", { ascending: false });
+      const { data, error } = await admin.from("license_keys").select("*").order("created_at", { ascending: false });
       if (error) return json({ success: false, error: error.message }, 500);
       return json({ success: true, keys: data });
     }
-
     if (action === "create") {
-      if (!email || !duration) return json({ success: false, error: "email and duration required" }, 400);
-      const newKey = makeKey();
-      const { data, error } = await supabase
-        .from("license_keys")
-        .insert({ license_key: newKey, customer_email: email, duration, is_active: true })
-        .select()
-        .single();
+      const email = String(body.email ?? "").trim().toLowerCase();
+      if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email) || !DURATIONS.includes(body.duration)) return json({ success: false, error: "Valid email and duration required" }, 400);
+      const { data, error } = await admin.from("license_keys").insert({ license_key: makeKey(), customer_email: email, duration: body.duration, is_active: true, created_by_user_id: user.id }).select().single();
       if (error) return json({ success: false, error: error.message }, 500);
       return json({ success: true, key: data });
     }
-
-    if (action === "deactivate") {
-      if (!keyId) return json({ success: false, error: "keyId required" }, 400);
-      const { error } = await supabase.from("license_keys").update({ is_active: false }).eq("id", keyId);
+    if (action === "deactivate" || action === "delete") {
+      // Revocation keeps the record (history/audit); delete is treated as revoke.
+      const id = String(body.keyId ?? "");
+      const { error } = await admin.from("license_keys").update({ is_active: false, auto_trading_enabled: false }).eq("id", id);
       if (error) return json({ success: false, error: error.message }, 500);
+      await admin.from("user_licenses").update({ is_active: false }).eq("license_key_id", id);
       return json({ success: true });
     }
-
-    if (action === "delete") {
-      if (!keyId) return json({ success: false, error: "keyId required" }, 400);
-      const { error } = await supabase.from("license_keys").delete().eq("id", keyId);
-      if (error) return json({ success: false, error: error.message }, 500);
-      return json({ success: true });
-    }
-
     return json({ success: false, error: "Unknown action" }, 400);
   } catch (e) {
     return json({ success: false, error: (e as Error).message }, 500);
