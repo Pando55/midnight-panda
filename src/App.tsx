@@ -16,6 +16,7 @@ import Sentiment from '@/pages/Sentiment';
 import Profile from '@/pages/Profile';
 import AIAssistant from '@/pages/AIAssistant';
 import Journal from '@/pages/Journal';
+import Broker from '@/pages/Broker';
 import BottomNav from '@/components/BottomNav';
 import InstallBanner from '@/components/InstallBanner';
 import LicenseGate from '@/components/LicenseGate';
@@ -24,7 +25,7 @@ import { Loader2 } from 'lucide-react';
 import type { TabName } from '@/types';
 
 // All tabs except Dashboard & Profile are license-gated to drive activations.
-const GATED_TABS: TabName[] = ['analyze', 'signals', 'risk-calc', 'calendar', 'education', 'community', 'leaderboard', 'chart-analysis', 'live-overlay', 'sentiment', 'ai-assistant', 'journal'];
+const GATED_TABS: TabName[] = ['analyze', 'signals', 'risk-calc', 'calendar', 'education', 'community', 'leaderboard', 'chart-analysis', 'live-overlay', 'sentiment', 'ai-assistant', 'journal', 'broker'];
 
 function App() {
   return (
@@ -91,6 +92,7 @@ function AppContent() {
         {activeTab === 'sentiment' && gated(<Sentiment />, 'Market Sentiment')}
         {activeTab === 'ai-assistant' && gated(<AIAssistant />, 'MP-Voice AI')}
         {activeTab === 'journal' && gated(<Journal />, 'Trade Journal')}
+        {activeTab === 'broker' && gated(<Broker />, 'Broker Trading')}
         {activeTab === 'profile' && <Profile onNavigate={setCurrentPage} />}
       </main>
       <BottomNav activeTab={activeTab} onTabChange={setActiveTab} />
