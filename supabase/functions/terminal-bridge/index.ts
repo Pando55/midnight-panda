@@ -5,11 +5,8 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { analyze, type Bar } from "../_shared/analysis.ts";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
+import { validateTrade, candleIssue } from "../_shared/trading-validation.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -58,13 +55,14 @@ serve(async (req) => {
     const action = String(body.action || "");
 
     // ---------- User-facing actions (need sign-in) ----------
-    if (["pair_start", "status", "set_risk", "stop", "resume", "authorize", "scan", "execute", "unpair"].includes(action)) {
+    if (["pair_start", "status", "set_risk", "stop", "resume", "authorize", "scan", "quote", "execute", "unpair"].includes(action)) {
       const user = await requireUser(req);
       if (!user) return json({ error: "Sign in required" }, 401);
 
       if (action === "pair_start") {
         const broker = String(body.broker || "").trim().slice(0, 60);
-        const platform = body.platform === "MT4" ? "MT4" : "MT5";
+        if (!["MT4", "MT5"].includes(body.platform)) return json({ error: "Select MT4 or MT5" }, 400);
+        const platform = body.platform;
         const accountNumber = String(body.account_number || "").trim().slice(0, 40);
         const server = String(body.server || "").trim().slice(0, 80);
         if (!broker || !accountNumber || !server) return json({ error: "Broker, account number and server are required" }, 400);
@@ -99,7 +97,7 @@ serve(async (req) => {
           .limit(20);
         const now = Date.now();
         return json({
-          accounts: (accounts || []).map((a) => ({ ...a, connected: !!a.last_sync_at && now - new Date(a.last_sync_at).getTime() < 15000 })),
+          accounts: (accounts || []).map((a) => ({ ...a, connected: !!a.paired_at && !!a.last_sync_at && now - new Date(a.last_sync_at).getTime() < 15000 })),
           requests: requests || [],
         });
       }
@@ -119,6 +117,7 @@ serve(async (req) => {
       if (action === "stop" || action === "resume") {
         const { error } = await db.from("trading_accounts").update({ stopped: action === "stop" }).eq("id", body.account_id).eq("user_id", user.id);
         if (error) return json({ error: error.message }, 400);
+        if (action === "stop") await db.from("trade_requests").update({ status: "cancelled" }).eq("account_id", body.account_id).eq("user_id", user.id).in("status", ["queued", "claimed"]);
         return json({ ok: true, stopped: action === "stop" });
       }
 
@@ -134,6 +133,8 @@ serve(async (req) => {
           .maybeSingle();
         if (!lic || lic.license_key.toUpperCase() !== key.toUpperCase()) return json({ error: "That key is not active on your account" }, 403);
         if (lic.expires_at && new Date(lic.expires_at) <= new Date()) return json({ error: "License expired" }, 403);
+        const { data: keyRecord } = await db.from("license_keys").select("is_active,auto_trading_enabled,activated_by_user_id,expires_at").eq("id", lic.license_key_id).maybeSingle();
+        if (!keyRecord?.is_active || !keyRecord.auto_trading_enabled || keyRecord.activated_by_user_id !== user.id || (keyRecord.expires_at && new Date(keyRecord.expires_at) <= new Date())) return json({ error: "License is not entitled to auto trading" }, 403);
         const { error } = await db
           .from("trading_accounts")
           .update({ authorization_license_id: lic.license_key_id, authorization_expires_at: new Date(Date.now() + 12 * 3600 * 1000).toISOString() })
@@ -154,10 +155,12 @@ serve(async (req) => {
         if (!account) return json({ error: "Account not found" }, 404);
         if (!account.last_sync_at || Date.now() - new Date(account.last_sync_at).getTime() > 15000) return json({ error: "Terminal is disconnected — open MT4/MT5 with the bridge EA attached" }, 409);
         const candles = (account.snapshot?.candles || []) as Bar[];
-        const symbol = account.selected_symbol || "UNKNOWN";
+        const symbol = account.selected_symbol;
         const timeframe = account.selected_timeframe || "M1";
         const digits = symbol.includes("JPY") ? 3 : symbol.startsWith("XAU") ? 2 : 5;
-        const result = analyze(candles, symbol, timeframe, { digits });
+        if (!symbol || (body.symbol && body.symbol !== symbol) || (body.timeframe && body.timeframe !== timeframe)) return json({ error: "Selected symbol/timeframe must match the terminal chart; switch the chart in MetaTrader first" }, 409);
+        const issue = candleIssue(candles, timeframe, Number(account.snapshot?.utc_time) || Date.now()/1000);
+        const result = issue ? { outcome: "INSUFFICIENT_DATA", symbol, timeframe, setup: null, reasons: [issue], missing: ["Fresh closed broker candles"], drawings: [] } : analyze(candles, symbol, timeframe, { digits: account.snapshot?.digits ?? digits });
         const tfMin = TF_MINUTES[timeframe] ?? 1;
         // New scan invalidates older open scans for this account.
         await db.from("chart_scans").update({ invalidated: true }).eq("account_id", account.id).eq("invalidated", false);
@@ -171,18 +174,16 @@ serve(async (req) => {
           .select("id")
           .single();
         if (error) return json({ error: error.message }, 400);
-        return json({ scan_id: scan.id, ...result });
+        return json({ scan_id: scan.id, account_id: account.id, source: "Broker terminal · closed candles", scanned_at: new Date().toISOString(), expires_at: new Date(Date.now() + 2 * tfMin * 60 * 1000).toISOString(), ...result });
       }
 
-      if (action === "execute") {
-        const idem = String(body.idempotency_key || crypto.randomUUID());
-        const orders = Math.max(1, Math.min(5, Number(body.orders) || 1));
-        const lot = Number(body.lot);
-        if (!Number.isFinite(lot) || lot <= 0 || lot > 50) return json({ error: "Lot size must be between 0.01 and 50" }, 400);
-        const mode = body.mode === "auto" ? "auto" : "manual";
+      if (action === "execute" || action === "quote") {
+        const invalid = validateTrade(body);
+        if (invalid) return json({ error: invalid }, 400);
         const { data, error } = await db.rpc("queue_terminal_request", {
-          uid: user.id, aid: body.account_id, sid: body.scan_id, idem, knd: "EXECUTE", md: mode,
-          body: { orders, lot, trailing_stop_pips: Number(body.trailing_stop_pips) || 0 },
+          uid: user.id, aid: body.account_id, sid: body.scan_id, idem: body.idempotency_key,
+          knd: action === "quote" ? "QUOTE" : "EXECUTE", md: body.mode,
+          body: { orders: body.orders, lot: body.lot, trailing_stop_pips: body.trailing_stop_pips, quote_id: body.quote_id || null },
         });
         if (error) return json({ error: error.message }, 400);
         return json({ request_id: data });
@@ -202,13 +203,14 @@ serve(async (req) => {
         .gt("pair_expires_at", new Date().toISOString())
         .maybeSingle();
       if (!account) return json({ error: "Invalid or expired pairing code" }, 403);
-      if (body.account_number && String(body.account_number) !== account.account_number) return json({ error: "This terminal is logged into a different account number" }, 403);
+      if (String(body.account_number) !== account.account_number || body.platform !== account.platform || body.server !== account.server) return json({ error: "Terminal account, platform or server does not match the pairing request" }, 403);
       const token = crypto.randomUUID() + crypto.randomUUID();
-      const { error } = await db
+      const { data: paired, error } = await db
         .from("trading_accounts")
         .update({ credential_hash: await sha256(token), paired_at: new Date().toISOString(), pair_code_hash: null, pair_expires_at: null })
-        .eq("id", account.id);
+        .eq("id", account.id).eq("pair_code_hash", hash).is("paired_at", null).select("id").maybeSingle();
       if (error) return json({ error: error.message }, 400);
+      if (!paired) return json({ error: "Pairing code already consumed" }, 409);
       return json({ account_id: account.id, token, platform: account.platform });
     }
 
@@ -217,6 +219,8 @@ serve(async (req) => {
       if (!account) return json({ error: "Unknown account or token" }, 403);
 
       if (action === "heartbeat") {
+        if (String(body.account_number) !== account.account_number || body.server !== account.server || body.platform !== account.platform) return json({ error: "Paired terminal identity mismatch" }, 403);
+        if (typeof body.is_demo !== "boolean" || !Number.isFinite(body.utc_time) || !Number.isFinite(body.digits) || Math.abs(Date.now()/1000-body.utc_time)>30) return json({ error: "Invalid terminal heartbeat or clock" }, 400);
         const symbol = String(body.symbol || account.selected_symbol || "").slice(0, 20);
         const timeframe = String(body.timeframe || account.selected_timeframe || "M1").slice(0, 4);
         const candles = Array.isArray(body.candles) ? (body.candles as Bar[]).slice(-300) : undefined;
@@ -228,7 +232,7 @@ serve(async (req) => {
         }
         const snapshot: Record<string, unknown> = {
           positions: Array.isArray(body.positions) ? body.positions.slice(0, 50) : [],
-          server_time: body.server_time || null,
+          server_time: body.server_time || null, utc_time: body.utc_time, digits: body.digits,
         };
         if (candles && candles.length) snapshot.candles = candles;
         else if (account.snapshot?.candles) snapshot.candles = account.snapshot.candles;
@@ -242,7 +246,7 @@ serve(async (req) => {
             currency: String(body.currency || "").slice(0, 8),
             is_demo: body.is_demo === false ? false : true,
             account_mode: body.is_demo === false ? "live" : "demo",
-            demo_verified_at: body.is_demo === false ? account.demo_verified_at : new Date().toISOString(),
+            // Heartbeats are not proof of a demo fill; verification stays external.
             selected_symbol: symbol,
             selected_timeframe: timeframe,
             snapshot,
@@ -256,21 +260,32 @@ serve(async (req) => {
         const { data, error } = await db.rpc("claim_terminal_request", { aid: account.id });
         if (error) return json({ error: error.message }, 400);
         const request = Array.isArray(data) && data.length ? data[0] : null;
-        return json({ request });
+        if (!request) return json({ command: "NONE" });
+        const { data: scan } = await db.from("chart_scans").select("analysis,symbol,timeframe").eq("id", request.scan_id).eq("account_id", account.id).maybeSingle();
+        if (!scan?.analysis?.setup) return json({ command: "NONE" });
+        const setup = scan.analysis.setup;
+        return json({ command: request.kind, request_id: request.id, symbol: scan.symbol, timeframe: scan.timeframe,
+          direction: setup.direction, entry: setup.entry, sl: setup.sl, tp: setup.tp,
+          lot: request.payload.lot, orders: request.payload.orders, trailing_stop_pips: request.payload.trailing_stop_pips,
+          max_risk_percent: account.max_risk_percent, max_exposure_lots: account.max_exposure_lots, daily_loss_percent: account.daily_loss_percent });
       }
 
       if (action === "permit") {
+        const { data: ownRequest } = await db.from("trade_requests").select("id").eq("id", body.request_id).eq("account_id", account.id).maybeSingle();
+        if (!ownRequest || !Number.isInteger(body.order_index) || body.order_index < 0) return json({ permitted: false }, 403);
         const { data, error } = await db.rpc("consume_trade_permit", { rid: body.request_id, order_index: Number(body.order_index) });
         if (error) return json({ error: error.message }, 400);
         return json({ permitted: !!data });
       }
 
       if (action === "report") {
-        const allowed = ["filled", "partial", "rejected", "cancelled", "unknown", "executing"];
+        const allowed = ["filled", "partial", "rejected", "cancelled", "unknown", "executing", "quoted"];
         const status = allowed.includes(body.status) ? body.status : "unknown";
+        const { data: existing } = await db.from("trade_requests").select("result,status").eq("id", body.request_id).eq("account_id", account.id).maybeSingle();
+        if (!existing || !["claimed", "executing"].includes(existing.status)) return json({ error: "Request is no longer active" }, 409);
         const { error } = await db
           .from("trade_requests")
-          .update({ status, result: typeof body.result === "object" && body.result ? body.result : {} })
+          .update({ status, result: { ...(typeof body.result === "object" && body.result ? body.result : {}), permitted: existing.result?.permitted || 0 } })
           .eq("id", body.request_id)
           .eq("account_id", account.id);
         if (error) return json({ error: error.message }, 400);

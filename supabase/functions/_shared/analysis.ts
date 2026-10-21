@@ -100,8 +100,8 @@ export function analyze(bars: Bar[], symbol: string, timeframe: string, opts: { 
 
   // Stage 4: patterns (double top/bottom, engulfing on last candle)
   const patterns: string[] = [];
-  if (hi.length >= 2 && Math.abs(b[hi.at(-1)!].h - b[hi.at(-2)!].h) < a * 0.3) patterns.push("Double top");
-  if (lo.length >= 2 && Math.abs(b[lo.at(-1)!].l - b[lo.at(-2)!].l) < a * 0.3) patterns.push("Double bottom");
+  if (hi.length >= 2 && Math.abs(b[hi[hi.length - 1]].h - b[hi[hi.length - 2]].h) < a * 0.3) patterns.push("Double top");
+  if (lo.length >= 2 && Math.abs(b[lo[lo.length - 1]].l - b[lo[lo.length - 2]].l) < a * 0.3) patterns.push("Double bottom");
   const p2 = b[b.length - 2];
   if (last.c > last.o && p2.c < p2.o && last.c > p2.o && last.o < p2.c) patterns.push("Bullish engulfing");
   if (last.c < last.o && p2.c > p2.o && last.c < p2.o && last.o > p2.c) patterns.push("Bearish engulfing");
